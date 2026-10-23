@@ -41,6 +41,22 @@ export class PreloaderScene extends Phaser.Scene {
         this.load.image('enemy', './assets/sprites/enemy.png');
         this.load.image('gorefield', './assets/sprites/gorefield.png');
         this.load.image('fireball', './assets/images/fireball.png');
+        this.load.image('bonzi', './assets/sprites/bonzi.png');
+        this.load.image('bonzi_red', './assets/sprites/bonzi_red.png');
+
+        // --- Carga de Soundtracks (con rutas relativas para GitHub Pages) ---
+        this.load.audio('music_menu', './assets/sounds/music_menu.mp3');
+        this.load.audio('music_levels', './assets/sounds/music_levels.mp3');
+        this.load.audio('music_castle', './assets/sounds/music_castle.mp3');
+        this.load.audio('music_boss', './assets/sounds/music_boss.mp3');
+        this.load.audio('music_gameover', './assets/sounds/music_gameover.mp3');
+        this.load.audio('music_victory', './assets/sounds/music_victory.mp3');
+        this.load.audio('music_apocalypse', './assets/sounds/music_apocalypse.mp3');
+
+        // --- Carga de Efectos de Sonido (SFX) ---
+        this.load.audio('sfx_jump', './assets/sounds/sfx_jump.mp3');
+        this.load.audio('sfx_powerup', './assets/sounds/sfx_powerup.mp3');
+        this.load.audio('sfx_cape', './assets/sounds/sfx_cape.mp3');
     }
 
     create() {
@@ -88,6 +104,14 @@ export class PreloaderScene extends Phaser.Scene {
         if (!this.textures.exists('fireball')) {
             const g = this.make.graphics().fillStyle(0xff3300).fillCircle(8, 8, 8);
             g.generateTexture('fireball', 16, 16);
+        }
+        if (!this.textures.exists('bonzi')) {
+            const g = this.make.graphics().fillStyle(0x7c3f9c).fillRect(0, 0, 64, 64);
+            g.generateTexture('bonzi', 64, 64);
+        }
+        if (!this.textures.exists('bonzi_red')) {
+            const g = this.make.graphics().fillStyle(0x7c3f9c).fillRect(0, 0, 64, 64).fillStyle(0xff0000).fillCircle(20, 20, 6).fillCircle(44, 20, 6);
+            g.generateTexture('bonzi_red', 64, 64);
         }
     }
 }

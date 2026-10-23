@@ -10,19 +10,36 @@ export class BaseLevelScene extends Phaser.Scene {
             worldWidth: 1600,
             worldHeight: 450,
             nextLevelKey: null,
+            customMusic: false,
             playerStart: { x: 80, y: 350 }
         }, config);
+    }
+
+    init(data = {}) {
+        // Persistencia de Vidas, Puntaje, Power-ups y Checkpoints entre niveles y muertes
+        this.lives = data.lives !== undefined ? data.lives : 3;
+        this.score = data.score !== undefined ? data.score : 0;
+        this.isPoweredUp = data.isPoweredUp !== undefined ? data.isPoweredUp : false;
+        this.hasCape = data.hasCape !== undefined ? data.hasCape : false;
+        this.checkpoint = data.checkpoint || null;
+        this.activeCheckpoint = data.checkpoint || null;
     }
 
     create() {
         const { worldWidth, worldHeight, title } = this.levelConfig;
 
-        // Reset de estados
+        // Reset de estados locales del nivel (manteniendo vidas, puntaje y power-ups)
         this.isLevelFinished = false;
         this.isDead = false;
-        this.isPoweredUp = false;
-        this.hasCape = false;
         this.isGliding = false;
+        this.isInvulnerable = false;
+        this.stompCombo = 0;
+        this.prevVelocityY = 0;
+
+        // Reproducir música de los niveles (Niveles 1 a 3)
+        if (!this.levelConfig.customMusic) {
+            this.playLevelMusic('music_levels', 0.45);
+        }
 
         // 1. Configurar límites de física y cámara
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
@@ -97,23 +114,73 @@ export class BaseLevelScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        const { x, y } = this.levelConfig.playerStart;
-        this.player = this.physics.add.sprite(x, y, 'player');
+        const spawnX = this.checkpoint ? this.checkpoint.x : this.levelConfig.playerStart.x;
+        const spawnY = this.checkpoint ? this.checkpoint.y : this.levelConfig.playerStart.y;
+        this.player = this.physics.add.sprite(spawnX, spawnY, 'player');
         this.player.setBounce(0);
         this.player.setCollideWorldBounds(false); // Permite caer al vacío
         this.player.body.setSize(22, 32);
         this.player.body.setOffset(5, 0);
         this.player.setDepth(20);
+
+        // Si ya poseía el Hongo del nivel previo, aplicar tamaño
+        if (this.isPoweredUp) {
+            this.player.setScale(1.35);
+            this.player.body.setSize(22, 32);
+        }
+    }
+
+    setCheckpoint(x, y) {
+        if (!this.activeCheckpoint || this.activeCheckpoint.x !== x || this.activeCheckpoint.y !== y) {
+            this.activeCheckpoint = { x, y };
+            this.checkpoint = { x, y };
+            this.showFloatingText(x, y - 45, '🚩 ¡CHECKPOINT GUARDADO!', '#00ff88');
+        }
     }
 
     createHUD(title) {
-        this.hudText = this.add.text(16, 16, title, {
-            fontSize: '16px',
+        this.hudText = this.add.text(16, 16, '', {
+            fontSize: '13px',
             fontFamily: 'monospace',
+            fontWeight: 'bold',
             color: '#ffffff',
-            backgroundColor: '#00000088',
-            padding: { x: 8, y: 4 }
+            backgroundColor: '#000000aa',
+            padding: { x: 10, y: 5 }
         }).setScrollFactor(0).setDepth(100);
+        this.updateHUD();
+    }
+
+    updateHUD() {
+        if (!this.hudText) return;
+        const hearts = '❤️'.repeat(Math.max(0, this.lives));
+        const formattedScore = this.score.toString().padStart(6, '0');
+        this.hudText.setText(`${hearts} x${this.lives} | 🏆 SCORE: ${formattedScore} | ${this.levelConfig.title}`);
+    }
+
+    addScore(points, x, y) {
+        this.score += points;
+        this.updateHUD();
+        if (x !== undefined && y !== undefined) {
+            this.showFloatingText(x, y, `+${points}`, '#ffd700');
+        }
+    }
+
+    playLevelMusic(key, volume = 0.5) {
+        try {
+            if (!this.cache.audio.exists(key)) return;
+            const current = this.sound.get(key);
+            if (current && current.isPlaying) return; // Si ya se está reproduciendo, mantener fluidez
+            this.sound.stopAll();
+            this.sound.play(key, { volume: volume, loop: true });
+        } catch (e) {}
+    }
+
+    playSFX(key, volume = 0.5) {
+        try {
+            if (this.cache.audio.exists(key)) {
+                this.sound.play(key, { volume: volume });
+            }
+        } catch (e) {}
     }
 
     // --- Métodos utilitarios para que los niveles construyan bloques fácilmente ---
@@ -230,6 +297,7 @@ export class BaseLevelScene extends Phaser.Scene {
 
         if (jumpPressed && canJump) {
             this.player.setVelocityY(jumpSpeed);
+            this.playSFX('sfx_jump', 0.45);
         }
 
         // Salto variable estilo Mario: soltar el botón corta la subida para mayor control
@@ -253,6 +321,11 @@ export class BaseLevelScene extends Phaser.Scene {
             }
         } else {
             this.isGliding = false;
+        }
+
+        // Registrar velocidad vertical antes del paso de físicas
+        if (this.player && this.player.body) {
+            this.prevVelocityY = this.player.body.velocity.y;
         }
 
         // Dibujar dinámicamente la capa
@@ -316,20 +389,28 @@ export class BaseLevelScene extends Phaser.Scene {
     handleEnemyCollision(player, enemy) {
         if (this.isDead || this.isLevelFinished) return;
 
-        // Detección precisa de pisotón (Stomp):
-        // El jugador debe estar cayendo (velocidad Y > 0) y su parte inferior debe golpear la parte superior del enemigo
-        const isStomp = (player.body.velocity.y > 0 && player.body.bottom <= enemy.body.top + 16) ||
-                        (player.body.touching.down && enemy.body.touching.up);
+        // Detección definitiva de pisotón (Stomp sobre enemigos menores):
+        // 1. El jugador estaba descendiendo en el aire o planeando (NUNCA quieto o corriendo en el suelo)
+        const wasFalling = (this.prevVelocityY > 0) || this.isGliding || (player.body.deltaY() > 0) || (player.body.prev.y < player.body.y);
+
+        // 2. Los pies del jugador deben estar claramente por encima de la base del enemigo (mínimo 8 px arriba)
+        const feetElevated = (enemy.body.bottom - player.body.bottom) >= 8;
+
+        // 3. Los pies del jugador deben impactar sobre la parte superior del enemigo
+        const landingOnTop = player.body.bottom <= enemy.body.top + 20;
+
+        const isStomp = wasFalling && feetElevated && landingOnTop;
 
         if (isStomp) {
             this.stompCombo = (this.stompCombo || 0) + 1;
             const points = 100 * Math.pow(2, Math.min(this.stompCombo - 1, 3));
+            this.addScore(points); // Sumar puntos del pisotón
             const comboText = this.stompCombo > 1 ? `+${points} ¡COMBO x${this.stompCombo}!` : `+${points}`;
 
             // Rebote del jugador tras pisar
-            player.setVelocityY(-340);
+            player.setVelocityY(-350);
 
-            // Efecto aplastamiento del enemigo
+            // Efecto aplastamiento del enemigo menor
             enemy.setVelocity(0, 0);
             enemy.body.enable = false;
             this.showFloatingText(enemy.x, enemy.y - 12, comboText, this.stompCombo > 1 ? '#00e5ff' : '#ffd700');
@@ -341,9 +422,72 @@ export class BaseLevelScene extends Phaser.Scene {
                 duration: 200,
                 onComplete: () => enemy.destroy()
             });
+        } else if (!this.isInvulnerable) {
+            // Golpe lateral recibido: si tiene power-up pierde el poder, si está pequeño pierde vida
+            this.handlePlayerHit(enemy, '¡Un enemigo te ha impactado lateralmente!');
+        }
+    }
+
+    // --- Sistema de Daño Estilo Super Mario (Pérdida de Power-Up vs Pérdida de Vida) ---
+
+    handlePlayerHit(source = null, reason = '') {
+        if (this.isDead || this.isInvulnerable) return;
+
+        // Si el jugador posee Capa o Hongo, pierde el power-up primero
+        if (this.hasCape || this.isPoweredUp) {
+            this.isInvulnerable = true;
+
+            if (this.hasCape) {
+                // Pierde la Capa primero (conserva Hongo si lo tenía)
+                this.hasCape = false;
+                this.isGliding = false;
+                if (this.capeGfx) this.capeGfx.clear();
+                this.showFloatingText(this.player.x, this.player.y - 35, '💔 ¡PIERDES LA CAPA! 🪶', '#ffd700');
+            } else if (this.isPoweredUp) {
+                // Pierde el Hongo y vuelve a Mario pequeño
+                this.isPoweredUp = false;
+                this.showFloatingText(this.player.x, this.player.y - 35, '💔 ¡PIERDES EL HONGO! 🍄', '#ff4444');
+                this.tweens.add({
+                    targets: this.player,
+                    scaleX: 1.0,
+                    scaleY: 1.0,
+                    duration: 180,
+                    onComplete: () => {
+                        if (this.player && this.player.active) {
+                            this.player.body.setSize(22, 32);
+                        }
+                    }
+                });
+            }
+
+            // Impulso de retroceso / escape para alejarse del peligro
+            this.player.setVelocityY(-260);
+            if (source && source.x !== undefined) {
+                const recoilDir = this.player.x < source.x ? -150 : 150;
+                this.player.setVelocityX(recoilDir);
+            }
+
+            this.cameras.main.shake(160, 0.012);
+
+            // Período de invulnerabilidad con parpadeo transparente (1.5 segundos)
+            this.tweens.add({
+                targets: this.player,
+                alpha: 0.25,
+                tint: 0xff8888,
+                duration: 90,
+                yoyo: true,
+                repeat: 8,
+                onComplete: () => {
+                    if (this.player && this.player.active) {
+                        this.player.setAlpha(1);
+                        this.player.clearTint();
+                        this.isInvulnerable = false;
+                    }
+                }
+            });
         } else {
-            // Golpe recibido por el jugador
-            this.handlePlayerDeath('¡Un enemigo te ha atrapado!');
+            // Si está pequeño (sin ningún power-up), pierde 1 vida (Game Over al llegar a 0)
+            this.handlePlayerDeath(reason);
         }
     }
 
@@ -352,7 +496,9 @@ export class BaseLevelScene extends Phaser.Scene {
     handlePowerup(player, powerup) {
         powerup.destroy();
         this.isPoweredUp = true;
-        this.showFloatingText(player.x, player.y - 30, '¡HONGO POWER-UP! (CRECES)', '#00ff88');
+        this.playSFX('sfx_powerup', 0.6);
+        this.addScore(250, player.x, player.y - 30);
+        this.showFloatingText(player.x, player.y - 45, '¡HONGO POWER-UP! (+250)', '#00ff88');
 
         // Animación de crecimiento estilo Mario
         this.tweens.add({
@@ -374,7 +520,9 @@ export class BaseLevelScene extends Phaser.Scene {
     handleFeather(player, feather) {
         feather.destroy();
         this.hasCape = true;
-        this.showFloatingText(player.x, player.y - 30, '🪶 ¡PLUMA CON CAPA! Mantén SALTO en el aire para PLANEAR', '#ffd700');
+        this.playSFX('sfx_cape', 0.6);
+        this.addScore(300, player.x, player.y - 30);
+        this.showFloatingText(player.x, player.y - 45, '🪶 ¡PLUMA CON CAPA! (+300)', '#ffd700');
 
         // Giro 360 estilo Mario World al adquirir la capa
         this.tweens.add({
@@ -453,25 +601,36 @@ export class BaseLevelScene extends Phaser.Scene {
         player.body.enable = false;
 
         if (this.levelConfig.nextLevelKey) {
-            // Transición a siguiente nivel
-            this.showFloatingText(player.x, player.y - 35, '¡NIVEL SUPERADO!', '#ffffff');
+            // Bonificación por superar el nivel y persistencia de power-ups
+            this.addScore(1000);
+            this.showFloatingText(player.x, player.y - 35, '¡NIVEL SUPERADO! +1000', '#00ff88');
             this.cameras.main.fade(600, 0, 0, 0);
             this.time.delayedCall(650, () => {
-                this.scene.start(this.levelConfig.nextLevelKey);
+                this.scene.start(this.levelConfig.nextLevelKey, {
+                    lives: this.lives,
+                    score: this.score,
+                    isPoweredUp: this.isPoweredUp,
+                    hasCape: this.hasCape
+                });
             });
         } else {
-            // Pantalla final de la DEMO (Nivel 3)
+            // Pantalla final de la DEMO
             this.showDemoFinishedScreen();
         }
     }
 
-    // --- Muerte / Reinicio ---
+    // --- Muerte / Reinicio con Sistema de 3 Vidas y Game Over ---
 
     handlePlayerDeath(reason = '') {
         if (this.isDead) return;
         this.isDead = true;
         this.hasCape = false;
+        this.isPoweredUp = false;
         if (this.capeGfx) this.capeGfx.clear();
+
+        // Descontar vida
+        this.lives--;
+        this.updateHUD();
 
         this.player.setTint(0xff3333);
         this.player.setVelocity(0, -320);
@@ -482,7 +641,23 @@ export class BaseLevelScene extends Phaser.Scene {
         this.time.delayedCall(800, () => {
             this.cameras.main.fade(300, 0, 0, 0);
             this.time.delayedCall(300, () => {
-                this.scene.restart();
+                if (this.lives > 0) {
+                    // Reiniciar nivel con vidas restantes, puntaje acumulado y checkpoint guardado
+                    this.scene.restart({
+                        lives: this.lives,
+                        score: this.score,
+                        isPoweredUp: false,
+                        hasCape: false,
+                        checkpoint: this.activeCheckpoint || this.checkpoint || null
+                    });
+                } else {
+                    // Transición a Game Over cuando se acaban las 3 vidas (preservando checkpoint al reintentar)
+                    this.scene.start('GameOverScene', {
+                        score: this.score,
+                        fromLevel: this.scene.key,
+                        checkpoint: this.activeCheckpoint || this.checkpoint || null
+                    });
+                }
             });
         });
     }

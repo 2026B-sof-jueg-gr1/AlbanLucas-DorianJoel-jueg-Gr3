@@ -7,6 +7,7 @@ export class Level3Scene extends BaseLevelScene {
             worldWidth: 2500,
             worldHeight: 450,
             nextLevelKey: 'Level4Scene', // Conduce al Castillo de Gorefield
+            customMusic: true,
             playerStart: { x: 70, y: 360 }
         });
     }
@@ -14,6 +15,9 @@ export class Level3Scene extends BaseLevelScene {
     buildLevel() {
         // Ambiente de castillo crepuscular desafiante
         this.cameras.main.setBackgroundColor('#261138');
+
+        // Reproducir soundtrack del Castillo (music_castle.mp3)
+        this.playLevelMusic('music_castle', 0.5);
 
         // --- 1. SECCIÓN INICIAL (Entrada y Equipamiento) ---
         this.createGround(0, 380);

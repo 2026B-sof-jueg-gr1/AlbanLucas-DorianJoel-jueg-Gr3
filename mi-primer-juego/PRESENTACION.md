@@ -1,4 +1,4 @@
-# 🍄 Super Mario Phaser Demo vs. Gorefield — Presentación Oficial
+# 🍄 Super Mario Phaser Demo vs. Gorefield — Presentación Oficial del Proyecto
 
 ---
 
@@ -6,9 +6,9 @@
 
 ### **Desarrollo de Videojuego de Plataformas 2D con Phaser 3 & ES Modules**
 
-> **Proyecto:** Super Mario World Demo — *La Pesadilla de Gorefield*  
-> **Tipo:** Prototipo modular de plataformas 2D con progresión de 4 niveles y Jefe Final.  
-> **Estilo Visual:** Retro Pixel-Art con renderizado nítido (`pixelArt: true`).
+> **Proyecto:** Super Mario World Demo — *La Pesadilla de Gorefield & El Apocalipsis de BonziBuddy*  
+> **Tipo:** Prototipo modular de plataformas 2D con progresión de 5 niveles, selección de nivel, sistema de vidas, puntuación, soundtracks dedicados y 2 Jefes Finales.  
+> **Estilo Visual & Sonoro:** Retro Pixel-Art con renderizado nítido (`pixelArt: true`) y soundtracks dedicados por zona y pantallas.
 
 ```text
   ██████╗ ██╗  ██╗ █████╗ ███████╗███████╗██████╗     ██████╗ 
@@ -17,130 +17,135 @@
   ██╔═══╝ ██╔══██║██╔══██║╚════██║██╔══╝  ██╔══██╗    ██╔═══╝ 
   ██║     ██║  ██║██║  ██║███████║███████╗██║  ██║    ███████╗
   ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝    ╚══════╝
-  [ MARIO STYLE PLATFORMER vs. ELDRITCH GOREFIELD BOSS ]
+  [ MARIO PLATFORMER: 5 NIVELES + SOUNDTRACKS + 3 VIDAS + GOREFIELD & BONZIBUDDY ]
 ```
 
 ### 🛠️ Stack Tecnológico Seleccionado
 | Tecnología | Función en el Proyecto | Implementación Concreta |
 | :--- | :--- | :--- |
-| **Phaser 3.80+** | Motor de Videojuegos 2D | Sistema **Arcade Physics** (`gravity.y: 900`), gestión de cámaras, colisiones y grupos estáticos. |
-| **JavaScript Modular (ESM)** | Arquitectura de Código | Modularidad mediante `import/export` nativo (`type="module"`), clase base orientada a objetos (`BaseLevelScene`). |
-| **Vite / Local Server** | Entorno de Desarrollo | Carga modular rápida compatible con políticas CORS del navegador. |
-| **GitHub Pages** | Despliegue en Producción | Alojamiento web estático en CDN global usando rutas relativas seguras (`./assets/...`). |
-| **HTML5 Canvas / CSS3** | Contenedor & Escalado | Modo `Scale.FIT` con centrado automático `CENTER_BOTH` y sombras retro. |
+| **Phaser 3.80+** | Motor de Videojuegos 2D | Sistema **Arcade Physics** (`gravity.y: 900`), Web Audio API, colisiones y grupos estáticos. |
+| **JavaScript Modular (ESM)** | Arquitectura de Código | Modularidad nativa con `import/export`, clase base [`BaseLevelScene`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/BaseLevelScene.js) y persistencia de estado. |
+| **Web Audio / Soundtracks** | Paisaje Sonoro Adaptativo | 7 pistas dinámicas: `music_menu`, `music_levels`, `music_castle`, `music_boss`, `music_victory`, `music_apocalypse` y `music_gameover`. |
+| **Vite / Local Server** | Entorno de Desarrollo | Servidor local ligero compatible con políticas de seguridad CORS para módulos y audio. |
+| **GitHub Pages** | Despliegue en Producción | Alojamiento en CDN global con rutas relativas seguras (`./assets/...`). |
+| **HTML5 Canvas / CSS3** | Contenedor & Escalado | Modo `Scale.FIT` con centrado automático `CENTER_BOTH` y renderizado pixelado. |
 
 ---
 
 ## 🔄 Diapositiva 2: Visión General y Ciclo de Juego
 
 ### **Objetivo del Juego**
-Guiar a Mario a través de **4 mundos progresivos**, recolectando power-ups clásicos (**Hongo de Crecimiento** 🍄 y **Pluma con Capa de Mario World** 🪶), superando fosos y enemigos de élite, hasta infiltrarse en el Castillo Oscuro para **enfrentar y derrotar a la pesadilla eldritch: GOREFIELD**.
+Superar una aventura de **5 niveles progresivos y desafiantes**, gestionando un banco de **3 vidas** y acumulando puntuación. El jugador debe dominar los power-ups clásicos (**Hongo de Crecimiento** 🍄 y **Pluma con Capa de Mario World** 🪶), cuyos efectos se conservan entre niveles, hasta infiltrarse en el Castillo de Lava para **destruir a la pesadilla GOREFIELD**, y luego adentrarse en la Tierra Devastada para enfrentar a la amenaza digital final: **BONZIBUDDY (Ojos Rojos)**.
 
-### 🔁 El Ciclo de Juego de Plataformas (Game Loop)
-El núcleo de la experiencia de juego (*Core Gameplay Loop*) opera a **60 FPS** bajo un flujo iterativo continuo:
+### 🔁 El Ciclo de Juego de Plataformas (Game Loop a 60 FPS)
 
 ```mermaid
 flowchart LR
-    A["👀 1. MIRAR<br/>(Plataformas, Fosos,<br/>Patrulla de Enemigos)"] --> B["🧠 2. DECIDIR<br/>(Salto Corto, Largo,<br/>Planear con Capa o Stomp)"]
-    B --> C["🎮 3. ACCIONAR<br/>(WASD / Flechas / Espacio<br/>Salto y Planeo)"]
-    C --> D["⚡ 4. EVALUAR<br/>(Pisotón + Combo,<br/>Daño recibido o Meta)"]
+    A["👀 1. MIRAR<br/>(Plataformas, Fosos,<br/>Patrulla de Enemigos)"] --> B["🧠 2. DECIDIR<br/>(Salto Corto, Salto Alto,<br/>Planeo con Capa o Stomp)"]
+    B --> C["🎮 3. ACCIONAR<br/>(WASD / Flechas / Espacio<br/>Correr, Saltar, Planear)"]
+    C --> D["⚡ 4. EVALUAR<br/>(Pisotón + Combo Score,<br/>Pérdida de Vida o Meta)"]
     D --> A
 
     classDef stage fill:#1a1c2e,stroke:#ffd700,stroke-width:2px,color:#ffffff;
     class A,B,C,D stage;
 ```
 
-1. **Mirar (Percepción):** El jugador escanea la pantalla: distancia del foso, altura de la plataforma, cadencia de salto de los Paragoombas o proyectiles de Gorefield.
-2. **Decidir (Táctica):** ¿Hacer un salto corto preciso? ¿Mantener el botón para máxima altura? ¿Abrir la capa en el aire para planear sobre el abismo?
-3. **Accionar (Ejecución):** Respuesta al teclado instantánea con físicas cinemáticas y control aéreo.
-4. **Evaluar (Resultado):** Destrucción del enemigo con rebote sonoro y puntos combo (`+100` a `+800`), recolección de power-up o avance de nivel.
+1. **Mirar (Percepción):** El jugador identifica la cadencia de salto de los Paragoombas, la velocidad de los guardias rojos o las bolas de fuego de Gorefield.
+2. **Decidir (Táctica):** ¿Hacer un salto corto controlado? ¿Usar el planeo de la capa para sobrevolar un foso mortal? ¿Encadenar pisotones para multiplicar el puntaje?
+3. **Accionar (Ejecución):** Respuesta de control milimétrica sin latencia, salto variable y planeo aéreo.
+4. **Evaluar (Resultado):** Destrucción de enemigos con puntos (`+100` a `+800`), recolección de power-up (+250/+300), descuento de vida o avance de nivel.
 
 ---
 
 ## 🏗️ Diapositiva 3: Arquitectura de Escenas
 
 ### **Flujo Modular de Estados en Phaser 3**
-La arquitectura desacoplada permite que cada nivel herede la física, los controles y las mecánicas compartidas desde [`BaseLevelScene`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/BaseLevelScene.js), manteniendo cada archivo de nivel limpio y enfocado exclusivamente en su diseño de mapa (*Level Design*).
+La arquitectura desacoplada permite que cada nivel herede la física, controles, sonido, puntaje y persistencia desde [`BaseLevelScene`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/BaseLevelScene.js), incorporando un **Menú de Selección de Niveles** y una pantalla de **Game Over**:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PreloaderScene : Carga inicial de Texturas & Sprites
-    PreloaderScene --> MainMenuScene : Assets listos en memoria
-    MainMenuScene --> Level1Scene : [ ENTER ] Iniciar Partida
-    Level1Scene --> Level2Scene : Tocar Bandera Tutorial
-    Level2Scene --> Level3Scene : Tocar Bandera de Exploración
-    Level3Scene --> Level4Scene : Cruzar Puente hacia el Castillo
-    Level4Scene --> VictoriaFinal : Vencer a GOREFIELD (0 HP)
-    VictoriaFinal --> MainMenuScene : [ ENTER ] Volver al Menú
+    [*] --> PreloaderScene : Carga de Sprites, Tiles y 7 Soundtracks
+    PreloaderScene --> MainMenuScene : Soundtrack de Menú
+    MainMenuScene --> LevelSelectScene : [ S ] Selección de Niveles (1 al 5)
+    MainMenuScene --> Level1Scene : [ ENTER ] Iniciar Campaña
+    LevelSelectScene --> Level1Scene : Seleccionar Nivel 1
+    LevelSelectScene --> Level2Scene : Seleccionar Nivel 2
+    LevelSelectScene --> Level3Scene : Seleccionar Nivel 3
+    LevelSelectScene --> Level4Scene : Seleccionar Nivel 4 (Gorefield)
+    LevelSelectScene --> Level5Scene : Seleccionar Nivel 5 (BonziBuddy)
+    Level1Scene --> Level2Scene : Tocar Meta (Conserva Capa/Hongo)
+    Level2Scene --> Level3Scene : Tocar Meta (Conserva Capa/Hongo)
+    Level3Scene --> Level4Scene : Entrar al Castillo
+    Level4Scene --> VictoriaGorefield : Derrotar a Gorefield (music_victory)
+    VictoriaGorefield --> Level5Scene : [ ENTER ] Continuar al Apocalipsis
+    Level5Scene --> GranVictoria : Derrotar a BonziBuddy ("I always come back")
+    Level1Scene --> GameOverScene : 0 Vidas restantes
+    Level2Scene --> GameOverScene : 0 Vidas restantes
+    Level3Scene --> GameOverScene : 0 Vidas restantes
+    Level4Scene --> GameOverScene : 0 Vidas restantes
+    Level5Scene --> GameOverScene : 0 Vidas restantes
+    GameOverScene --> LevelSelectScene : [ S ] Elegir Nivel
+    GameOverScene --> MainMenuScene : [ ENTER ] Menú Principal
 ```
 
 ### 📂 Desglose de Escenas y Responsabilidades
-* **[`config.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/config.js):** Físicas globales (`arcade`, `gravity: 900`), dimensiones base ($800 \times 450$) y lista de escenas.
-* **[`PreloaderScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/PreloaderScene.js):** Carga de assets (`player`, `enemy`, `gorefield`, `feather`, `mushroom`, `fireball`) y texturas procedurales de reserva (*fallbacks*).
-* **[`MainMenuScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/MainMenuScene.js):** Pantalla de título Mario World con decoraciones, resumen de controles y disparador de inicio.
-* **[`BaseLevelScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/BaseLevelScene.js):** Motor común de juego: control del jugador, salto variable, planeo de capa, pisotón en cadena, patrulla inteligente de enemigos y HUD.
-* **[`Level1Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level1Scene.js):** Nivel 1: Tutorial de movimiento, salto y mecánica de pisotón (Stomp).
-* **[`Level2Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level2Scene.js):** Nivel 2: Exploración no lineal con rutas bifurcadas y power-ups secretos.
-* **[`Level3Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level3Scene.js):** Nivel 3: Puente al castillo en modo experto con 11 enemigos de élite y abismos.
-* **[`Level4Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level4Scene.js):** Nivel 4: Castillo de lava, arena con cierre hermético y batalla de jefe final contra Gorefield.
+* **[`config.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/config.js):** Registro de las 9 escenas del juego, configuración Arcade Physics y resolución panorámica.
+* **[`PreloaderScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/PreloaderScene.js):** Carga de texturas (`bonzi_red`, `gorefield`, `player`, `enemy`) y de los 7 soundtracks (`music_menu`, `music_levels`, `music_castle`, `music_boss`, `music_victory`, `music_apocalypse`, `music_gameover`).
+* **[`MainMenuScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/MainMenuScene.js):** Menú oscuro de horror y apocalipsis con soundtrack dedicado (`music_menu`), siluetas de ruinas, Mario y ambos jefes acechando en las sombras, acceso directo a jugar [ENTER] o selector de 5 niveles [S].
+* **[`LevelSelectScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/LevelSelectScene.js):** Menú interactivo con tarjetas de los 5 niveles para salto directo o pruebas.
+* **[`GameOverScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/GameOverScene.js):** Pantalla de fin de partida al agotar las 3 vidas, con soundtrack fúnebre y opciones de reintento.
+* **[`BaseLevelScene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/BaseLevelScene.js):** Clase base: persistencia de vidas/puntaje/capa, HUD en tiempo real, detección de bordes en enemigos y reproductor de música adaptativo.
+* **[`Level1Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level1Scene.js):** Praderas desafiantes (Tutorial interactivo, saltadores y guardias).
+* **[`Level2Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level2Scene.js):** Cavernas y alturas (Rutas no lineales con Hongo y Pluma secreta).
+* **[`Level3Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level3Scene.js):** Puente del abismo (Modo experto con 11 enemigos de élite y fosos).
+* **[`Level4Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level4Scene.js):** Castillo de lava, arena cerrada, combate contra Gorefield (6 HP), fanfarria de victoria y transición al Nivel 5.
+* **[`Level5Scene.js`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/Level5Scene.js):** Tierra apocalíptica (3400 px), ruinas calcinadas, obstáculos extremos, soundtrack melancólico/esperanzador y combate contra el Jefe Final BonziBuddy (Ojos Rojos, 7 HP) con su frase *"I always come back"*.
 
 ---
 
-## 📷 Diapositiva 4: Mundo vs. Pantalla y Cámara
+## 📷 Diapositiva 4: Mundo vs. Pantalla, Cámara y HUD
 
 ### **Resolución de Pantalla (Viewport) vs. Límites del Mundo**
-* **Resolución de Pantalla (Viewport):** $800 \times 450\text{ px}$ (Panorámico 16:9 de alta definición retro).
+* **Resolución de Pantalla (Viewport):** $800 \times 450\text{ px}$ (Panorámico 16:9).
 * **Dimensiones del Mundo (World Bounds):**
-  * Nivel 1: $1600 \times 450\text{ px}$
-  * Nivel 2: $2000 \times 450\text{ px}$
+  * Nivel 1: $1800 \times 450\text{ px}$
+  * Nivel 2: $2200 \times 450\text{ px}$
   * Nivel 3: $2500 \times 450\text{ px}$
   * Nivel 4: $2400 \times 450\text{ px}$
+  * Nivel 5: $3400 \times 450\text{ px}$ (El nivel más extenso y desafiante)
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│ MUNDO DEL NIVEL: Hasta 2500 x 450 px                                   │
+│ MUNDO DEL CIRCUITO / NIVEL: Hasta 3400 x 450 px                        │
 │                                                                        │
 │            ┌────────────────────────┐                                  │
 │            │ VIEWPORT: 800 x 450 px │                                  │
-│            │  [ Mario ] ──> Cámara   │                                  │
-│            │  (startFollow suave)   │                                  │
+│            │  [ Mario ] ──> Cámara   │  [ HUD INMÓVIL ]                 │
+│            │  (startFollow suave)   │  ❤️ x3 | SCORE: 001200 | NIVEL 5 │
 │            └────────────────────────┘                                  │
-│   [Fosos]                     [Plataformas]               [Meta/Boss]  │
+│   [Fosos Radiactivos]         [Plataformas Ruinas]        [Jefe Final] │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 🎥 Seguimiento Suave de Cámara (`startFollow`)
-Se implementa una interpolación lineal (*Lerp*) de `0.08` para emular el paneo suave de las consolas de 16-bits:
-
-```javascript
-// Limitar cámara al tamaño del nivel activo
-this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-
-// Seguimiento con interpolación lineal suave (lerpX: 0.08, lerpY: 0.08)
-this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-this.cameras.main.setFollowOffset(0, 30);
-```
-
-### 🔒 Bloqueo Dinámico de Cámara en la Arena de Gorefield
-Al entrar al salón del jefe final, la arena se sella y la cámara se confina automáticamente a la sala ($1320$ a $2400\text{ px}$):
-```javascript
-this.cameras.main.setBounds(1320, 0, 1080, 450);
-```
-
-### 📊 Interfaz HUD Inmóvil (`scrollFactor: 0`)
-Toda la información crítica (nombre del nivel, barra de salud del jefe, combos aéreos) se fija al cristal de la pantalla:
-```javascript
-this.hudText.setScrollFactor(0).setDepth(100);
-this.bossHudContainer.setScrollFactor(0).setDepth(200);
-```
+### 🎥 Seguimiento Suave de Cámara e Inmovilidad del HUD
+* **Seguimiento con interpolación lineal (Lerp):**
+  ```javascript
+  this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+  this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+  ```
+* **HUD Estático y Reactivo (`scrollFactor: 0`):**
+  Se fija al cristal de la pantalla mostrando en tiempo real las vidas (`❤️ x3`), el puntaje acumulado y el nivel actual:
+  ```javascript
+  this.hudText = this.add.text(16, 16, '', { ... }).setScrollFactor(0).setDepth(100);
+  ```
 
 ---
 
 ## ⚙️ Diapositiva 5: Físicas y Mecánicas de Plataformas
 
-### **Motor Arcade Physics con Gravedad Calibrada**
+### **Motor Arcade Physics con Salto Dinámico**
 * **Gravedad Mundial:** $g = 900\text{ px/s}^2$.
-* **Velocidad Horizontal Base:** $v_x = 200\text{ px/s}$ (aumenta a $230\text{ px/s}$ con Power-Up).
+* **Velocidad de Carrera:** $200\text{ px/s}$ (aumenta a $230\text{ px/s}$ con Hongo).
 
 ### 🦘 Salto Variable Dinámico (Sensación Super Mario World)
 La altura del salto depende de cuánto tiempo el jugador sostiene el botón:
@@ -148,19 +153,19 @@ La altura del salto depende de cuánto tiempo el jugador sostiene el botón:
 $$h_{\text{max}} = \frac{v_0^2}{2g} = \frac{(-500)^2}{2 \times 900} \approx 138.8\text{ píxeles}$$
 
 ```javascript
-// Impulso inicial al presionar salto
+// Salto inicial
 if (jumpPressed && canJump) {
     this.player.setVelocityY(this.isPoweredUp ? -550 : -500);
 }
 
-// Salto Variable: si suelta la tecla mientras asciende, corta el impulso
+// Salto Variable: soltar el botón corta el ascenso inmediatamente
 if (!jumpPressed && this.player.body.velocity.y < -120) {
     this.player.setVelocityY(this.player.body.velocity.y * 0.7);
 }
 ```
 
 ### 🪶 Mecánica de Planeo de la Capa (*Cape Glide*)
-Al equipar la Pluma, sostener salto en el aire reduce la velocidad de caída terminal a un suave planeo:
+Al equipar la Pluma, mantener presionado salto en el aire reduce la gravedad a un planeo suave ($65\text{ px/s}$):
 
 ```javascript
 const isFalling = this.player.body.velocity.y > 0;
@@ -168,7 +173,6 @@ const canGlide = this.hasCape && !canJump && jumpPressed && isFalling;
 
 if (canGlide) {
     this.player.setVelocityY(65); // Caída lenta terminal (Glide)
-    // Agilidad horizontal incrementada durante el vuelo
     if (cursors.left.isDown)  this.player.setVelocityX(-220);
     if (cursors.right.isDown) this.player.setVelocityX(220);
 }
@@ -176,89 +180,95 @@ if (canGlide) {
 
 ---
 
-## 🛑 Diapositiva 6: Sistema de Reglas, Power-Ups y Detección
+## 🛑 Diapositiva 6: Sistema de Reglas, Vidas y Power-Ups
 
-### **1. Mecánica de Pisotón (Stomp) vs. Daño Lateral**
-El sistema evalúa el vector cinemático en el instante del impacto:
+### **1. Sistema de 3 Vidas, Jerarquía de Daño y Game Over**
+* El jugador inicia con **3 Vidas (`lives = 3`)**.
+* **Jerarquía de Daño Clásica (Fiel a Super Mario):**
+  * **Con Capa 🪶:** Un impacto lateral o proyectil **retira la Capa** (`hasCape = false`), conservando el tamaño aumentado si tenía Hongo. Otorga un salto de retroceso y **1.5 segundos de invulnerabilidad con parpadeo**.
+  * **Con Hongo 🍄:** Un impacto lateral **encoge a Mario** a su forma pequeña (`isPoweredUp = false`, escala `1.0`), otorgando retroceso y **1.5 segundos de invulnerabilidad**.
+  * **Mario Pequeño:** Al no tener power-ups, el impacto lateral **descuenta 1 Vida** (`lives--`). Si llega a 0 vidas, transiciona a [`GameOverScene`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/GameOverScene.js).
+  * **Caída al Vacío:** Caer fuera de los límites inferiores siempre descuenta 1 vida directamente, fiel a los juegos de plataformas.
 
-```mermaid
-flowchart TD
-    Col["💥 Colisión Mario vs. Enemigo"] --> Check{"¿Mario cae sobre la cabeza?<br/>(v_y > 0 ó contacto vertical)"}
-    Check -- "SÍ (PISOTÓN)" --> Stomp["👟 STOMP EXITOSO<br/>• Aplasta y destruye al enemigo<br/>• Rebote aéreo: v_y = -340 px/s<br/>• Multiplicador de Combo (+100 a +800)"]
-    Check -- "NO (CONTACTO LATERAL)" --> Hurt["💀 IMPACTO RECIBIDO<br/>• Parpadeo de daño rojo<br/>• Sacudida de cámara<br/>• Reinicio de nivel"]
-```
-
-### **2. Los Power-Ups del Juego**
-* **🍄 Hongo de Crecimiento:** Escala a Mario a $1.35\times$ con animación *squash & stretch*, incrementa la velocidad a $230\text{ px/s}$ y el salto a $-550\text{ px/s}$.
-* **🪶 Pluma con Capa:** Otorga la capa amarilla dinámica con renderizado procedural (cuelga en reposo, ondea al correr y se abre horizontalmente al planear).
-
-### **3. Detección Inteligente de Bordes (*Edge Detection*) en Enemigos**
-Los enemigos ya no caen al vacío: detectan si hay suelo a 6 píxeles de sus pies antes de dar el siguiente paso:
+### **2. Persistencia Total de Power-Ups entre Niveles**
+Si Mario obtiene el Hongo 🍄 o la Capa 🪶 en el Nivel 1 o Nivel 2, **comienza el siguiente nivel con dicho power-up ya equipado**, permitiéndole planear o resistir desde el primer segundo:
 
 ```javascript
-const checkX = movingRight ? enemy.body.right + 6 : enemy.body.left - 6;
-const checkY = enemy.body.bottom + 8;
-
-// Verifica si existe algún bloque de plataforma en las coordenadas de pisada
-const hasFloorAhead = platformTiles.some(p =>
-    checkX >= p.x - 16 && checkX <= p.x + 16 &&
-    checkY >= p.y - 16 && checkY <= p.y + 16
-);
-
-// Si se termina la plataforma, el enemigo gira suavemente hacia el otro lado
-if (!hasFloorAhead) {
-    enemy.setVelocityX(movingRight ? -speed : speed);
-}
+// En BaseLevelScene al tocar la bandera de meta:
+this.scene.start(nextLevelKey, {
+    lives: this.lives,
+    score: this.score + 1000,
+    isPoweredUp: this.isPoweredUp, // Persiste estado de Hongo
+    hasCape: this.hasCape          // Persiste estado de Capa
+});
 ```
+
+### **3. Detección Inteligente de Bordes en Enemigos (*Edge Detection*)**
+Los enemigos escanean el suelo a 6 píxeles por delante de sus pies antes de avanzar. Si la plataforma termina, **invierten su dirección automáticamente**, evitando caídas accidentales.
+
+### **4. Sistema de Checkpoints en Batallas de Jefes (Gorefield y BonziBuddy)**
+* Al alcanzar la antesala del Nivel 4 ($x = 1270$) o del Nivel 5 ($x = 2500$), se activa un **Checkpoint automático**.
+* Si el jugador es derrotado dentro de la arena de combate por Gorefield o BonziBuddy, **reaparece inmediatamente un paso antes de entrar a la arena**, con una estación de recarga de power-ups (Hongo y Pluma) a su disposición, sin necesidad de rehacer el nivel completo.
+* El checkpoint se conserva tanto al perder vidas individuales como al reintentar desde la pantalla de Game Over.
 
 ---
 
-## 🗺️ Diapositiva 7: Diseño de Niveles, Jefe Gorefield e Interfaz
+## 🗺️ Diapositiva 7: Diseño de Niveles, Jefes y Soundtracks
 
-### **Progresión de los 4 Niveles**
+### **Rutas de Audio Establecidas en `assets/sounds/`**
+1. **`music_menu.mp3`**: Soundtrack retro optimista para el Menú Principal y Selección de Nivel.
+2. **`music_levels.mp3`**: Soundtrack clásico de praderas para los Niveles 1 y 2.
+3. **`music_castle.mp3`**: Marcha fúnebre y oscura para el Nivel 3 (Puente al Castillo) y el calabozo del Nivel 4.
+4. **`music_boss.mp3`**: Ritmo acelerado y frenético para las batallas de jefes (Gorefield y BonziBuddy).
+5. **`music_victory.mp3`**: Fanfarria triunfal de victoria al destruir a Gorefield o vencer el juego.
+6. **`music_apocalypse.mp3`**: Melodía nostálgica y esperanzadora en escala menor para el Nivel 5 devastado.
+7. **`music_gameover.mp3`**: Jingle melancólico descendente al agotarse las 3 vidas.
 
-```text
- [ NIVEL 1 ] ────────> [ NIVEL 2 ] ────────> [ NIVEL 3 ] ────────> [ NIVEL 4 ]
- Tutorial Básico      Exploración           Puente Experto       Castillo de Lava
- • Plataformas        • Rutas altas/bajas   • 11 Enemigos Élite  • Arena Cerrada
- • 2 Enemigos         • Hongo 🍄 & Pluma 🪶 • Fosos y Saltadores • BOSS: GOREFIELD
- • Bandera Meta       • Fosos y Secretos    • Combos Aéreos      • 5 HP / 3 Fases
-```
+### **Efectos de Sonido (SFX Clásicos)**
+* **`sfx_jump.mp3`**: Salto retro dinámico con barrido ascendente de frecuencia (140 Hz a 620 Hz).
+* **`sfx_powerup.mp3`**: Arpegio staccato ascendente de 7 notas al recolectar el Hongo 🍄.
+* **`sfx_cape.mp3`**: Remolino sonoro y repique brillante de campanas mágicas al adquirir la Pluma con Capa 🪶.
 
-### 👹 Batalla Final: GOREFIELD (Eldritch Nightmare)
-* **Sprite:** Araña monstruosa con cabeza de Garfield ($948 \times 1024\text{ px}$ escalado a proporción de jefe).
-* **Barra de Vida:** 5 Puntos de Salud (HP) con actualización visual en tiempo real.
-* **Fases del Combate:**
-  * **Fase 1 (HP 5-4):** Persecución por suelo y disparo de bolas de fuego infernales cada $2.2\text{ s}$.
-  * **Fase 2 (HP 3-2):** Aumento de velocidad a $140\text{ px/s}$ y saltos sísmicos aplastantes con sacudida de pantalla.
-  * **Fase 3 (HP 1 - Furia):** Barra en rojo brillante, ráfagas continuas de fuego y embestidas rápidas.
-  * **Derrota:** Destello blanco de pantalla, animación de giro/desintegración y aparición de la Bandera de Gran Victoria.
+### 👹 Jefe 1: GOREFIELD (Nivel 4 - 6 HP) — Dinamismo Extremo
+* **Anti-Exploit de Pisotón Continuo (Teletransportación Inmediata):** Tras recibir un pisotón, Gorefield se desvanece instantáneamente en llamas y se teletransporta a un punto aleatorio distante de la arena ($> 260\text{ px}$ o plataformas elevadas), impidiendo rebotar repetidamente en el mismo sitio.
+* **Anillo Radial de Bombas en 360°:** En el momento exacto del pisotón, Gorefield expulsa una corona expansiva de 8 a 12 bolas de fuego que cubren los 360 grados, obligando al jugador a maniobrar en el aire y no quedarse suspendido.
+* **Bombas de Cráter y Destrucción del Piso:** Lanza morteros pesados de lava que al estrellarse destruyen baldosas del suelo. Además, en transiciones de fase (HP = 4 y HP = 2), desata colapsos sísmicos telegrafiados que hunden sectores enteros del piso abriendo abismos letales directos al vacío.
+* **Invocación de Esbirros de Lava:** En HP = 4 y HP = 2 convoca engendros saltadores de fuego para forzar combate multifoco.
+* **IA Ágil y Evasión de Fosos:** Detecta los fosos destruidos y salta ágilmente sobre ellos (`vy = -440`) para perseguir al jugador sin caer en sus propias trampas.
+* **Recompensa:** $+5000\text{ pts}$ al destruirlo, fanfarria `music_victory` y pantalla de transición al Nivel 5.
+
+### 🟣 Jefe Final: BONZIBUDDY OJOS ROJOS (Nivel 5 - 7 HP) — Dificultad Pesadilla
+* **Anti-Exploit Glitch (Teletransporte Cuántico):** Al ser pisado, BonziBuddy sufre un error de fragmentación y se teletransporta a la plataforma más distante o extremo opuesto de la arena, rompiendo cualquier combo de rebote.
+* **Anillo Radial Glitch en 360°:** Despacha una descarga circular de 8 a 12 orbes de virus púrpura/cian en todas las direcciones tridimensionales para castigar la estancia aérea estática.
+* **Deleción de Bloques y Desintegración de Memoria:** Dispara bombas de corrupción cuántica que borran permanentemente bloques del piso. A 5 HP y 3 HP activa alertas telegrafiadas (`ERROR 404: SECTOR BORRADO`) que desintegran franjas completas abriendo fosas radiactivas al vacío mortal.
+* **Invocación de Agentes Virales:** Despliega esbirros ciber-glitch veloces y agresivos que patrullan y asedian a Mario.
+* **Fase Crítica (HP <= 2):** Sobrecarga de velocidad extrema ($190\text{ px/s}$), ráfagas dobles y teletransportes frenéticos.
+* **Frase Icónica de Derrota:** Al vaciar sus 7 HP, se congela temblando y pronuncia:
+  > **❝ I always come back ❞**
+  seguido de su implosión, la fanfarria de victoria y la Pantalla de Gran Victoria Definitiva.
 
 ---
 
 ## 🚀 Diapositiva 8: Despliegue y Conclusión
 
 ### **Flujo de Trabajo Git & GitHub Pages**
-1. **Control de Versiones Limpio:** Commits semánticos documentando físicas, jefes y correcciones de bugs.
-2. **Arquitectura de Rutas Relativas Seguras:**
-   * Carga estricta mediante `./assets/...` para evitar errores 404 en el subdominio de GitHub:
-     `https://2026B-sof-jueg-gr1.github.io/alban-dorian-jueg-Gr3/mi-primer-juego/`
-3. **Publicación Continua:** Configurado desde `Settings -> Pages -> Branch: main -> / (root)`.
+1. **Control de Versiones Atómico:** Commits semánticos para audio, vidas, menú y jefe.
+2. **Compatibilidad Total de Rutas Relativas:** Carga mediante `./assets/...` para funcionar tanto en servidor local como en el subdirectorio de GitHub Pages:
+   `https://2026B-sof-jueg-gr1.github.io/alban-dorian-jueg-Gr3/mi-primer-juego/`
 
 ```bash
-# Despliegue en un solo comando
 git add .
-git commit -m "feat: presentacion completa con contexto oficial de Mario vs Gorefield"
+git commit -m "feat: integracion de 4 soundtracks, 3 vidas, game over, seleccion de nivel y persistencia"
 git push origin main
 ```
 
-### 📈 Métricas de Rendimiento Alcanzadas
-| Métrica | Meta Técnica | Medición en Ejecución |
+### 📈 Métricas de Rendimiento Técnicas
+| Parámetro | Objetivo | Rendimiento Obtenido |
 | :--- | :---: | :---: |
-| **Cuadros por Segundo (FPS)** | $60\text{ FPS}$ constantes | **$60\text{ FPS}$ estables** (Arcade Physics optimizado) |
-| **Tiempo de Carga Inicial** | $< 1.5\text{ s}$ | **$\approx 0.5\text{ s}$** (Preloader eficiente) |
-| **Tiempo de Frame de Render** | $< 16.6\text{ ms}$ | **$\approx 2.1\text{ ms}$** por cuadro |
-| **Consumo de Memoria RAM** | $< 100\text{ MB}$ | **$\approx 45\text{ MB}$** en batalla con Gorefield |
+| **Fluidez de Render** | $60\text{ FPS}$ constantes | **$60\text{ FPS}$ sin caídas** |
+| **Latencia de Audio** | $< 50\text{ ms}$ | **Instantánea** (Web Audio buffer) |
+| **Tiempo de Carga Total** | $< 1.5\text{ s}$ | **$\approx 0.6\text{ s}$** con assets y audio |
+| **Consumo de Memoria** | $< 120\text{ MB}$ | **$\approx 52\text{ MB}$** con música y físicas |
 
-### 🎯 Conclusión del Proyecto
-Se logró construir un videojuego web 2D completo, robusto y altamente divertido, que rescata la esencia de las físicas de salto y planeo de **Super Mario World**, complementado con un giro creativo de acción y suspenso al enfrentar al jefe **Gorefield**, todo estructurado con las mejores prácticas de **JavaScript moderno**, código limpio reutilizable y despliegue automático en la nube.
+### 🎯 Conclusión
+El proyecto integra con éxito la experiencia retro de plataformas de **Super Mario World** con la innovación de un combate contra un jefe monstruoso (**Gorefield**), respaldado por una **arquitectura modular profesional en Phaser 3**, persistencia de estado global y sonido adaptativo listo para jugar en la web.

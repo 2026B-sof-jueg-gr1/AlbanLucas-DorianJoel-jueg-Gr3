@@ -3,8 +3,8 @@ import { BaseLevelScene } from './BaseLevelScene.js';
 export class Level2Scene extends BaseLevelScene {
     constructor() {
         super('Level2Scene', {
-            title: 'NIVEL 2: EXPLORACIÓN NO LINEAL',
-            worldWidth: 2000,
+            title: 'NIVEL 2: CAVERNAS Y ALTURAS (EXPLORACIÓN EXPERTA)',
+            worldWidth: 2200,
             worldHeight: 450,
             nextLevelKey: 'Level3Scene',
             playerStart: { x: 70, y: 360 }
@@ -12,41 +12,51 @@ export class Level2Scene extends BaseLevelScene {
     }
 
     buildLevel() {
-        // --- 1. Terreno con caminos alternativos (Ruta Inferior y Ruta Superior) ---
-        this.createGround(0, 450);
-        this.createGround(520, 1120);
-        this.createGround(1220, 2000);
+        // --- 1. Terreno con Bifurcación Desafiante ---
+        // Entrada
+        this.createGround(0, 420);
 
-        // --- RUTA SUPERIOR (Exploración con Power-Ups) ---
-        this.createPlatform(360, 340, 3);
-        this.createPlatform(500, 270, 3);
-        this.createPlatform(660, 210, 4); // Cima con el hongo
-        this.createPlatform(880, 210, 3); // Plataforma alta con la pluma secreta
-        this.createPlatform(1080, 280, 3);
+        // Foso 1
+        this.createGround(480, 1100);
+        // Foso 2
+        this.createGround(1240, 2200);
 
-        // Letrero orientativo
-        this.add.text(390, 220, '⬆️ ¡Explora las alturas para encontrar\nel Hongo 🍄 y la Pluma con Capa 🪶!', {
-            fontSize: '12px',
+        // --- RUTA SUPERIOR DE PRECISIÓN (Power-ups: Hongo 🍄 y Pluma con Capa 🪶) ---
+        this.createPlatform(340, 330, 2);
+        this.createPlatform(460, 260, 2);
+        this.createPlatform(600, 200, 3); // Plataforma alta con el hongo
+        this.createPlatform(800, 230, 2);
+        this.createPlatform(940, 170, 3); // Cima con la pluma secreta
+        this.createPlatform(1120, 240, 2);
+        this.createPlatform(1260, 310, 2);
+
+        // Letrero de desafío
+        this.add.text(370, 210, '⬆️ RUTA SUPERIOR:\n¡Mantén el equilibrio para conseguir el Hongo y la Capa!', {
+            fontSize: '11px',
             fontFamily: 'monospace',
             color: '#ffd700',
-            backgroundColor: '#00000077',
-            padding: { x: 6, y: 3 }
+            backgroundColor: '#00000088',
+            padding: { x: 6, y: 4 }
         });
 
-        // --- 2. Power-Ups ---
-        // Hongo de crecimiento
-        this.createPowerup(710, 170);
+        // --- 2. Power-Ups persistentes ---
+        this.createPowerup(648, 155);  // Hongo (+250)
+        this.createFeather(988, 125);  // Pluma de la Capa (+300)
 
-        // Pluma secreta con capa (Mario World Cape Feather)
-        this.createFeather(920, 165);
+        // --- 3. Enemigos de la Ruta Baja y Alta (6 en total) ---
+        // Enemigos en el suelo inferior
+        this.createEnemy(620, 380, -65);
+        this.createJumpingEnemy(850, 380, -45, -340, 1600); // Saltador inferior
 
-        // --- 3. Enemigos patrullando ---
-        this.createEnemy(650, 380, -60);
-        this.createEnemy(530, 240, 45); // Enemigo patrullando la plataforma superior
-        this.createJumpingEnemy(920, 380, -50, -320, 1800); // Enemigo saltador
-        this.createEnemy(1600, 380, -90, true); // Enemigo rojo veloz en el tramo final
+        // Enemigo custodiando plataforma media
+        this.createEnemy(820, 195, 40);
+
+        // Enemigos custodiando el tramo largo hacia la meta
+        this.createEnemy(1450, 380, -70);
+        this.createEnemy(1680, 380, -110, true); // Rojo veloz
+        this.createJumpingEnemy(1880, 380, -50, -350, 1500); // Saltador final
 
         // --- 4. Meta al final de la exploración ---
-        this.createGoal(1850, 380);
+        this.createGoal(2050, 380);
     }
 }
