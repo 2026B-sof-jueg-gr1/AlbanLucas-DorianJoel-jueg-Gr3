@@ -58,6 +58,10 @@ export class BaseLevelScene extends Phaser.Scene {
         // Gráficos dinámicos para la capa (dibujados detrás del jugador)
         this.capeGfx = this.add.graphics().setDepth(15);
 
+        // Estado de cinemática de presentación de jefes
+        this.inBossCinematic = false;
+        this.isPaused = false;
+
         // 4. Crear el Jugador primero para que esté disponible en buildLevel()
         this.createPlayer();
 
@@ -139,6 +143,8 @@ export class BaseLevelScene extends Phaser.Scene {
     }
 
     createHUD(title) {
+        const { width } = this.cameras.main;
+
         this.hudText = this.add.text(16, 16, '', {
             fontSize: '13px',
             fontFamily: 'monospace',
@@ -148,6 +154,24 @@ export class BaseLevelScene extends Phaser.Scene {
             padding: { x: 10, y: 5 }
         }).setScrollFactor(0).setDepth(100);
         this.updateHUD();
+
+        // Botón de Pausa en la esquina superior derecha
+        this.pauseBtn = this.add.text(width - 65, 26, '⏸️ PAUSA', {
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            backgroundColor: '#1f2937',
+            padding: { x: 9, y: 6 }
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setInteractive({ useHandCursor: true });
+
+        this.pauseBtn.on('pointerover', () => this.pauseBtn.setStyle({ backgroundColor: '#374151', color: '#ffd700' }));
+        this.pauseBtn.on('pointerout', () => this.pauseBtn.setStyle({ backgroundColor: '#1f2937', color: '#ffffff' }));
+        this.pauseBtn.on('pointerdown', () => this.togglePause());
+
+        // Atajos de teclado para pausar (P o Escape)
+        this.input.keyboard.on('keydown-P', () => this.togglePause());
+        this.input.keyboard.on('keydown-ESC', () => this.togglePause());
     }
 
     updateHUD() {
@@ -181,6 +205,128 @@ export class BaseLevelScene extends Phaser.Scene {
                 this.sound.play(key, { volume: volume });
             }
         } catch (e) {}
+    }
+
+    // --- Sistema de Pausa y Menú Modal ---
+
+    togglePause() {
+        if (this.isPaused) {
+            this.resumeGame();
+        } else {
+            this.pauseGame();
+        }
+    }
+
+    pauseGame() {
+        if (this.isDead || this.isLevelFinished || this.inBossCinematic || this.isPaused || this.bossDefeated) return;
+        this.isPaused = true;
+        this.physics.world.pause();
+
+        const { width, height } = this.cameras.main;
+
+        // Capa oscura translúcida
+        this.pauseOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72)
+            .setScrollFactor(0)
+            .setDepth(500);
+
+        // Contenedor del menú modal de pausa
+        this.pauseModal = this.add.container(0, 0).setScrollFactor(0).setDepth(501);
+
+        const modalBg = this.add.rectangle(width / 2, height / 2, 440, 270, 0x0f172a, 0.96)
+            .setStrokeStyle(3, 0x3b82f6);
+
+        const modalTitle = this.add.text(width / 2, height / 2 - 95, '⏸️ JUEGO EN PAUSA', {
+            fontSize: '24px',
+            fontFamily: 'Impact, Arial Black',
+            color: '#ffd700',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+
+        const modalSubtitle = this.add.text(width / 2, height / 2 - 62, `${this.levelConfig.title}`, {
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            color: '#94a3b8'
+        }).setOrigin(0.5);
+
+        // Botón 1: Continuar
+        const resumeBtn = this.add.text(width / 2, height / 2 - 18, '▶️ [ CONTINUAR ]', {
+            fontSize: '14px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            backgroundColor: '#15803d',
+            padding: { x: 18, y: 7 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        resumeBtn.on('pointerover', () => resumeBtn.setStyle({ backgroundColor: '#16a34a' }));
+        resumeBtn.on('pointerout', () => resumeBtn.setStyle({ backgroundColor: '#15803d' }));
+        resumeBtn.on('pointerdown', () => this.resumeGame());
+
+        // Botón 2: Reiniciar Nivel
+        const restartBtn = this.add.text(width / 2, height / 2 + 32, '🔄 [ REINICIAR NIVEL ]', {
+            fontSize: '13px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            backgroundColor: '#b45309',
+            padding: { x: 14, y: 7 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        restartBtn.on('pointerover', () => restartBtn.setStyle({ backgroundColor: '#d97706' }));
+        restartBtn.on('pointerout', () => restartBtn.setStyle({ backgroundColor: '#b45309' }));
+        restartBtn.on('pointerdown', () => {
+            this.resumeGame();
+            this.cameras.main.fade(300, 0, 0, 0);
+            this.time.delayedCall(320, () => {
+                this.scene.restart({
+                    lives: this.lives,
+                    score: this.score,
+                    isPoweredUp: false,
+                    hasCape: false,
+                    checkpoint: this.activeCheckpoint || this.checkpoint || null
+                });
+            });
+        });
+
+        // Botón 3: Menú Principal
+        const menuBtn = this.add.text(width / 2, height / 2 + 82, '🏠 [ MENÚ PRINCIPAL ]', {
+            fontSize: '13px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            backgroundColor: '#b91c1c',
+            padding: { x: 14, y: 7 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        menuBtn.on('pointerover', () => menuBtn.setStyle({ backgroundColor: '#dc2626' }));
+        menuBtn.on('pointerout', () => menuBtn.setStyle({ backgroundColor: '#b91c1c' }));
+        menuBtn.on('pointerdown', () => {
+            this.isPaused = false;
+            this.physics.world.resume();
+            this.sound.stopAll();
+            this.cameras.main.fade(300, 0, 0, 0);
+            this.time.delayedCall(320, () => {
+                this.scene.start('MainMenuScene');
+            });
+        });
+
+        this.pauseModal.add([modalBg, modalTitle, modalSubtitle, resumeBtn, restartBtn, menuBtn]);
+    }
+
+    resumeGame() {
+        if (!this.isPaused) return;
+        this.isPaused = false;
+        this.physics.world.resume();
+
+        if (this.pauseOverlay) {
+            this.pauseOverlay.destroy();
+            this.pauseOverlay = null;
+        }
+        if (this.pauseModal) {
+            this.pauseModal.destroy();
+            this.pauseModal = null;
+        }
     }
 
     // --- Métodos utilitarios para que los niveles construyan bloques fácilmente ---
@@ -272,6 +418,19 @@ export class BaseLevelScene extends Phaser.Scene {
 
     update() {
         if (this.isDead || this.isLevelFinished) return;
+
+        // Si el juego está en pausa, inmovilizar completamente
+        if (this.isPaused) {
+            this.player.setVelocity(0, 0);
+            return;
+        }
+
+        // Inmovilizar al jugador durante la cinemática de 5 segundos de presentación del jefe
+        if (this.inBossCinematic) {
+            this.player.setVelocityX(0);
+            this.renderCape();
+            return;
+        }
 
         const baseSpeed = this.isPoweredUp ? 230 : 200;
         const jumpSpeed = this.isPoweredUp ? -550 : -500;
@@ -431,7 +590,7 @@ export class BaseLevelScene extends Phaser.Scene {
     // --- Sistema de Daño Estilo Super Mario (Pérdida de Power-Up vs Pérdida de Vida) ---
 
     handlePlayerHit(source = null, reason = '') {
-        if (this.isDead || this.isInvulnerable) return;
+        if (this.isDead || this.isInvulnerable || this.inBossCinematic) return;
 
         // Si el jugador posee Capa o Hongo, pierde el power-up primero
         if (this.hasCape || this.isPoweredUp) {
@@ -659,6 +818,152 @@ export class BaseLevelScene extends Phaser.Scene {
                     });
                 }
             });
+        });
+    }
+
+    // --- Cinemática de Presentación de 5 Segundos para Jefes ---
+
+    playBossPresentationCinematic({ title, name, quote, accentColor = 0xff2200, onComplete }) {
+        this.inBossCinematic = true;
+        this.player.setVelocity(0, 0);
+
+        const { width, height } = this.cameras.main;
+
+        // Contenedor principal de la cinemática
+        const cinematicContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(350);
+
+        // 1. Barras negras de formato cinematográfico (Letterbox)
+        const topBar = this.add.rectangle(width / 2, -45, width, 55, 0x000000).setScrollFactor(0).setDepth(351);
+        const bottomBar = this.add.rectangle(width / 2, height + 45, width, 55, 0x000000).setScrollFactor(0).setDepth(351);
+
+        this.tweens.add({
+            targets: topBar,
+            y: 24,
+            duration: 400,
+            ease: 'Power2'
+        });
+
+        this.tweens.add({
+            targets: bottomBar,
+            y: height - 24,
+            duration: 400,
+            ease: 'Power2'
+        });
+
+        // 2. Banner de Presentación del Jefe
+        const bannerBox = this.add.rectangle(width / 2, height / 2, 640, 150, 0x06060c, 0.92)
+            .setStrokeStyle(3, accentColor)
+            .setAlpha(0)
+            .setScale(0.9);
+
+        const alertText = this.add.text(width / 2, height / 2 - 46, title, {
+            fontSize: '13px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffdd00',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setAlpha(0);
+
+        const nameText = this.add.text(width / 2, height / 2 - 16, name, {
+            fontSize: '20px',
+            fontFamily: 'Impact, Arial Black',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 5
+        }).setOrigin(0.5).setAlpha(0);
+
+        const quoteText = this.add.text(width / 2, height / 2 + 15, quote, {
+            fontSize: '13px',
+            fontFamily: 'monospace',
+            fontStyle: 'italic',
+            color: '#e2e8f0'
+        }).setOrigin(0.5).setAlpha(0);
+
+        // Contador regresivo de 5 segundos
+        let timeLeft = 5;
+        const countdownText = this.add.text(width / 2, height / 2 + 48, `⚔️ EL COMBATE COMIENZA EN: ${timeLeft}s ⚔️`, {
+            fontSize: '15px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5).setAlpha(0);
+
+        cinematicContainer.add([bannerBox, alertText, nameText, quoteText, countdownText]);
+
+        // Entrada dramática del banner
+        this.tweens.add({
+            targets: [bannerBox, alertText, nameText, quoteText, countdownText],
+            alpha: 1,
+            scale: 1,
+            duration: 400,
+            ease: 'Back.easeOut'
+        });
+
+        // Parpadeo sutil del título
+        this.tweens.add({
+            targets: alertText,
+            scale: 1.08,
+            duration: 350,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Evento temporizador de 1 segundo (se dispara 5 veces = 5 segundos exactos)
+        this.time.addEvent({
+            delay: 1000,
+            repeat: 4,
+            callback: () => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    countdownText.setText(`⚔️ EL COMBATE COMIENZA EN: ${timeLeft}s ⚔️`);
+                    if (timeLeft <= 2) {
+                        countdownText.setColor('#ff3333');
+                    } else if (timeLeft <= 3) {
+                        countdownText.setColor('#ffbb00');
+                    }
+                    this.cameras.main.shake(120, 0.008);
+                    this.tweens.add({
+                        targets: countdownText,
+                        scaleX: 1.25,
+                        scaleY: 1.25,
+                        duration: 120,
+                        yoyo: true
+                    });
+                } else {
+                    // Cumplidos los 5 segundos exactos
+                    countdownText.setText('🔥 ¡A LUCHAR! 🔥');
+                    countdownText.setColor('#ff2200');
+                    this.cameras.main.shake(350, 0.02);
+
+                    this.time.delayedCall(400, () => {
+                        this.tweens.add({
+                            targets: topBar,
+                            y: -60,
+                            duration: 350
+                        });
+                        this.tweens.add({
+                            targets: bottomBar,
+                            y: height + 60,
+                            duration: 350
+                        });
+                        this.tweens.add({
+                            targets: cinematicContainer,
+                            alpha: 0,
+                            duration: 350,
+                            onComplete: () => {
+                                topBar.destroy();
+                                bottomBar.destroy();
+                                cinematicContainer.destroy();
+                                this.inBossCinematic = false;
+                                if (onComplete) onComplete();
+                            }
+                        });
+                    });
+                }
+            }
         });
     }
 

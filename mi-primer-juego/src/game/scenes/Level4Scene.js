@@ -85,6 +85,9 @@ export class Level4Scene extends BaseLevelScene {
         // Plataforma previa que conecta suavemente con la entrada sin solaparse
         this.createPlatform(1130, 360, 2);
 
+        // --- ZONA SECRETA EN EL TECHO DEL CASTILLO (Cáliz Sagrado & Bloque Oculto) ---
+        this.createCastleSecretArea();
+
         // --- 2. LA ARENA DE GOREFIELD Y CHECKPOINT (1220 a 2400) ---
         // Suelo firme extendido desde el punto de control hasta la arena de combate
         this.createGround(1220, 2400);
@@ -164,6 +167,118 @@ export class Level4Scene extends BaseLevelScene {
         this.physics.add.collider(this.player, this.gorefield, this.handleGorefieldCollision, null, this);
     }
 
+    createCastleSecretArea() {
+        // --- BÓVEDA SECRETA EN EL TECHO DEL CASTILLO (X: 500 a 860, Y: 40 a 90) ---
+        // Pista visual misteriosa en el camino inferior
+        this.add.text(480, 260, '✨ [?] ¿Secretos en el techo? Vuela alto con la Capa 🪶', {
+            fontSize: '10px',
+            fontFamily: 'monospace',
+            color: '#ffd700',
+            backgroundColor: '#00000099',
+            padding: { x: 5, y: 3 }
+        });
+
+        // 1. Bloque misterioso oculto a mitad de altura (x=520, y=175)
+        const hiddenBlock = this.platforms.create(520, 175, 'platform');
+        hiddenBlock.setAlpha(0); // Invisible al inicio
+        hiddenBlock.isSecretRevealed = false;
+
+        // Detector de golpe con la cabeza (Head bonk de Mario por debajo)
+        this.physics.add.overlap(this.player, hiddenBlock, (player, block) => {
+            if (!block.isSecretRevealed && (this.prevVelocityY < 0 || player.body.velocity.y < 0) && player.body.top <= block.body.bottom + 10) {
+                block.isSecretRevealed = true;
+                block.setAlpha(1);
+                block.setTint(0xffd700); // Dorado resplandeciente
+                this.playSFX('sfx_powerup', 0.5);
+                this.showFloatingText(block.x, block.y - 25, '✨ ¡BLOQUE SECRETO REVELADO! ✨', '#ffd700');
+                this.cameras.main.shake(120, 0.008);
+            }
+        });
+
+        // 2. Plataformas doradas secretas suspendidas en el techo
+        this.createPlatform(660, 85, 3);
+        this.createPlatform(780, 60, 3);
+
+        // Estilizar con tinte dorado místico las baldosas de la bóveda
+        this.platforms.getChildren().forEach(tile => {
+            if (tile.y <= 90 && tile.x >= 650 && tile.x <= 880) {
+                tile.setTint(0xffd700);
+            }
+        });
+
+        // 3. El Gran Cáliz Sagrado de Inmortalidad (Reliquia Secreta)
+        const relic = this.physics.add.sprite(740, 42, 'feather');
+        relic.setScale(1.5);
+        relic.setTint(0xffd700);
+        relic.body.setAllowGravity(false);
+        relic.body.setSize(24, 24);
+
+        // Halo de luz dorada pulsante
+        const halo = this.add.circle(740, 42, 22, 0xffd700, 0.35);
+        this.tweens.add({
+            targets: [relic, halo],
+            scaleX: 1.8,
+            scaleY: 1.8,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Cartel secreto dentro de la bóveda
+        this.add.text(670, 110, '🏆 BÓVEDA SECRETA DE LASAÑA DORADA 🏆', {
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffd700',
+            backgroundColor: '#000000aa',
+            padding: { x: 6, y: 3 }
+        });
+
+        // Al recoger la reliquia secreta
+        this.physics.add.overlap(this.player, relic, () => {
+            if (relic.collected) return;
+            relic.collected = true;
+
+            // SFX de celebración doble
+            this.playSFX('sfx_powerup', 0.8);
+            this.time.delayedCall(200, () => this.playSFX('sfx_cape', 0.8));
+
+            // Premios colosales: +1 Vida, +5000 Puntos, Poder Máximo (Hongo + Capa)
+            this.lives++;
+            this.updateHUD();
+            this.addScore(5000, 740, 20);
+
+            this.isPoweredUp = true;
+            this.hasCape = true;
+            this.player.setScale(1.35);
+
+            // Destello dorado en toda la pantalla
+            this.cameras.main.flash(800, 255, 215, 0);
+            this.cameras.main.shake(300, 0.02);
+
+            // Mensaje épico de recompensa
+            this.showFloatingText(740, 10, '🌟 ¡BÓVEDA SECRETA RECLAMADA! (+1 VIDA ❤️ | +5000 PTS) 🌟', '#00ff88');
+
+            // Explosión de partículas doradas
+            for (let i = 0; i < 14; i++) {
+                const spark = this.add.circle(740 + Phaser.Math.Between(-25, 25), 42 + Phaser.Math.Between(-25, 25), Phaser.Math.Between(3, 7), 0xffd700);
+                this.tweens.add({
+                    targets: spark,
+                    x: spark.x + Phaser.Math.Between(-60, 60),
+                    y: spark.y + Phaser.Math.Between(-60, 60),
+                    alpha: 0,
+                    scale: 0.1,
+                    duration: 600,
+                    onComplete: () => spark.destroy()
+                });
+            }
+
+            halo.destroy();
+            relic.destroy();
+        }, null, this);
+    }
+
     createBackgroundDecorations() {
         // En el interior del castillo no dibujamos nubes celestes
     }
@@ -172,6 +287,7 @@ export class Level4Scene extends BaseLevelScene {
     startBossBattle() {
         if (this.bossActive) return;
         this.bossActive = true;
+        this.bossInvulnerable = true;
 
         // 1. Cambiar al Soundtrack intenso del Jefe Final
         this.playLevelMusic('music_boss', 0.6);
@@ -185,18 +301,26 @@ export class Level4Scene extends BaseLevelScene {
         this.cameras.main.setBounds(1320, 0, 1080, 450);
         this.cameras.main.shake(500, 0.02);
 
-        // 4. Crear HUD de la Barra de Vida del Jefe
-        this.createBossHealthBar();
+        // 4. Cinemática de presentación de 5 segundos antes de comenzar la batalla
+        this.playBossPresentationCinematic({
+            title: '⚠️ ¡ALERTA DE JEFE FINAL! ⚠️',
+            name: '👹 GOREFIELD: LA PESADILLA DE LASAÑA 👹',
+            quote: '❝ ¡El lunes nunca terminará para ti, Mario! ❞',
+            accentColor: 0xff3b30,
+            onComplete: () => {
+                // Pasados los 5 segundos exactos:
+                this.bossInvulnerable = false;
+                this.createBossHealthBar();
+                this.showFloatingText(1850, 100, '🔥 ¡A LUCHAR! 🔥', '#ffdd00');
 
-        // 5. Iniciar bucle de ataques de Gorefield (cadencia de 2 segundos)
-        this.time.addEvent({
-            delay: 2000,
-            loop: true,
-            callback: () => this.bossAttackRoutine()
+                // Iniciar bucle de ataques de Gorefield (cadencia de 2 segundos)
+                this.bossAttackTimer = this.time.addEvent({
+                    delay: 2000,
+                    loop: true,
+                    callback: () => this.bossAttackRoutine()
+                });
+            }
         });
-
-        // Diálogo espeluznante
-        this.showFloatingText(1850, 100, '❝ ¡EL LUNES NUNCA TERMINARÁ, MARIO! ❞', '#ff2222');
     }
 
     createBossHealthBar() {
@@ -544,7 +668,7 @@ export class Level4Scene extends BaseLevelScene {
     }
 
     handleGorefieldCollision(player, boss) {
-        if (this.isDead || this.bossDefeated) return;
+        if (this.isDead || this.bossDefeated || this.inBossCinematic) return;
 
         // Detección definitiva de pisotón (Stomp sobre la cabeza de Gorefield):
         // 1. Debe estar descendiendo en el aire o planeando (nunca quieto o corriendo en el suelo)
@@ -608,6 +732,7 @@ export class Level4Scene extends BaseLevelScene {
     defeatGorefield() {
         this.bossDefeated = true;
         this.bossActive = false;
+        if (this.bossAttackTimer) this.bossAttackTimer.remove();
         this.addScore(5000); // 5000 puntos por derrotar al jefe
 
         // Detener música de combate y reproducir el soundtrack de victoria

@@ -211,6 +211,15 @@ Los enemigos escanean el suelo a 6 píxeles por delante de sus pies antes de ava
 * Si el jugador es derrotado dentro de la arena de combate por Gorefield o BonziBuddy, **reaparece inmediatamente un paso antes de entrar a la arena**, con una estación de recarga de power-ups (Hongo y Pluma) a su disposición, sin necesidad de rehacer el nivel completo.
 * El checkpoint se conserva tanto al perder vidas individuales como al reintentar desde la pantalla de Game Over.
 
+### **5. Sistema Universal de Pausa y Menú de Control en Todos los Niveles**
+* **Acceso Inmediato e Intuitivo:** Implementado transversalmente en [`BaseLevelScene`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/BaseLevelScene.js), activo en los 5 niveles del juego.
+* **Múltiples Métodos de Activación:** Mediante botón interactivo en el HUD (`⏸️ PAUSA`) situado en la esquina superior derecha o mediante teclado con las teclas rápidas **`P`** o **`ESC`**.
+* **Congelamiento Completo:** Congela el motor de físicas (`physics.world.pause()`), proyectiles, timers y animaciones del jugador y enemigos.
+* **Menú Flotante con Tres Opciones Tácticas:**
+  * **`▶️ [ CONTINUAR ]`**: Reanuda inmediatamente la partida y las físicas sin saltos ni penalizaciones.
+  * **`🔄 [ REINICIAR NIVEL ]`**: Reinicia el escenario actual (preservando el checkpoint de jefe si ya fue alcanzado).
+  * **`🏠 [ MENÚ PRINCIPAL ]`**: Detiene los sonidos y retorna limpiamente a [`MainMenuScene`](file:///c:/Juegos/alban-dorian-jueg-Gr3/mi-primer-juego/src/game/scenes/MainMenuScene.js).
+
 ---
 
 ## 🗺️ Diapositiva 7: Diseño de Niveles, Jefes y Soundtracks
@@ -223,13 +232,29 @@ Los enemigos escanean el suelo a 6 píxeles por delante de sus pies antes de ava
 5. **`music_victory.mp3`**: Fanfarria triunfal de victoria al destruir a Gorefield o vencer el juego.
 6. **`music_apocalypse.mp3`**: Melodía nostálgica y esperanzadora en escala menor para el Nivel 5 devastado.
 7. **`music_gameover.mp3`**: Jingle melancólico descendente al agotarse las 3 vidas.
+8. **`music_akatsuki.mp3`**: Marcha mística, solemne y ritualística con campana budista (*Bonshō*), flauta tradicional *Shakuhachi*, cantos corales oscuros (*estilo Girei*) y tambores *Taiko*, exclusiva para la derrota de BonziBuddy y el Teaser de los Akatsuki.
 
 ### **Efectos de Sonido (SFX Clásicos)**
 * **`sfx_jump.mp3`**: Salto retro dinámico con barrido ascendente de frecuencia (140 Hz a 620 Hz).
 * **`sfx_powerup.mp3`**: Arpegio staccato ascendente de 7 notas al recolectar el Hongo 🍄.
 * **`sfx_cape.mp3`**: Remolino sonoro y repique brillante de campanas mágicas al adquirir la Pluma con Capa 🪶.
 
+### 🎬 Cinemática de Presentación de Jefes (5 Segundos)
+* **Formato Cinematográfico Letterbox:** Al entrar a la arena de Gorefield o BonziBuddy, franjas negras cinematográficas se deslizan en los extremos superior e inferior.
+* **Bloqueo Inmune Temporal:** Durante exactamente 5 segundos, Mario y el jefe quedan inmovilizados sin recibir ni infligir daño mientras suena la música de combate.
+* **Tarjeta de Presentación y Cuenta Regresiva:** Un cartel arcade presenta el nombre y frase del jefe, junto con una cuenta regresiva dinámica (`5... 4... 3... 2... 1... ¡A LUCHAR!`).
+* **Inicio Explosivo:** Cumplidos los 5 segundos, las barras se retiran, se activan los controles del jugador y se despliega la barra de vida para comenzar el combate.
+
+### 🌟 Secreto del Nivel 4: Bóveda Sagrada de Lasaña Dorada
+* **Descubrimiento por Vuelo o Salto:** Oculto en el techo de la caverna ($y \le 85$, entre $x = 650$ y $880$), accesible planeando con la Capa 🪶 o revelando un bloque misterioso invisible en $x = 520, y = 175$.
+* **Recompensa Legendaria:**
+  * **+1 Vida Extra** inmediata (`lives++`).
+  * **+5000 Puntos** de bonificación.
+  * **Máximo Poder Automático:** Equipa de inmediato el Hongo 🍄 y la Pluma con Capa 🪶.
+  * Destello dorado de pantalla completa con partículas de victoria.
+
 ### 👹 Jefe 1: GOREFIELD (Nivel 4 - 6 HP) — Dinamismo Extremo
+* **Cinemática de Entrada:** 5 segundos de presentación dramática antes de iniciar el combate.
 * **Anti-Exploit de Pisotón Continuo (Teletransportación Inmediata):** Tras recibir un pisotón, Gorefield se desvanece instantáneamente en llamas y se teletransporta a un punto aleatorio distante de la arena ($> 260\text{ px}$ o plataformas elevadas), impidiendo rebotar repetidamente en el mismo sitio.
 * **Anillo Radial de Bombas en 360°:** En el momento exacto del pisotón, Gorefield expulsa una corona expansiva de 8 a 12 bolas de fuego que cubren los 360 grados, obligando al jugador a maniobrar en el aire y no quedarse suspendido.
 * **Bombas de Cráter y Destrucción del Piso:** Lanza morteros pesados de lava que al estrellarse destruyen baldosas del suelo. Además, en transiciones de fase (HP = 4 y HP = 2), desata colapsos sísmicos telegrafiados que hunden sectores enteros del piso abriendo abismos letales directos al vacío.
@@ -238,14 +263,18 @@ Los enemigos escanean el suelo a 6 píxeles por delante de sus pies antes de ava
 * **Recompensa:** $+5000\text{ pts}$ al destruirlo, fanfarria `music_victory` y pantalla de transición al Nivel 5.
 
 ### 🟣 Jefe Final: BONZIBUDDY OJOS ROJOS (Nivel 5 - 7 HP) — Dificultad Pesadilla
-* **Anti-Exploit Glitch (Teletransporte Cuántico):** Al ser pisado, BonziBuddy sufre un error de fragmentación y se teletransporta a la plataforma más distante o extremo opuesto de la arena, rompiendo cualquier combo de rebote.
+* **Fondo Exclusivo de la Luna Roja (Rinne Sharingan):** Al entrar a la arena de BonziBuddy, el fondo del nivel se transforma en un cielo carmesí presidido por una gigantesca **Luna Roja de Ojos Malditos** (`red_moon.png`), con resplandor de eclipse pulsante y rotación lenta. Este fondo es 100% exclusivo de la batalla final contra BonziBuddy.
+* **Cinemática de Entrada:** 5 segundos de presentación dramática con cuenta regresiva.
+* **Efecto Glitch de Virus en el Sprite tras Pisotón:** Cada vez que Mario le propina un pisotón a BonziBuddy, su sprite experimenta un colapso digital espasmódico e instantáneo: aberración cromática RGB con clones fantasma en cian y magenta, cortes y tiras de escaneo horizontal (*scanline slice glitch*), deformación y sacudida de escala horizontal, parpadeo estroboscópico de tintes de virus (cian, fucsia, verde matriz, blanco estático), fuga de glifos de código corrupto (`01`, `ERR`, `404`, `VIRUS`) y audio sintético de fallo de memoria (*bitcrush glitch*), consolidando su naturaleza de entidad cibernética corrupta.
+* **Anti-Exploit Glitch (Teletransporte Cuántico):** Tras el glitch del pisotón, BonziBuddy sufre un error de fragmentación y se teletransporta a la plataforma más distante o extremo opuesto de la arena, rompiendo cualquier combo de rebote.
 * **Anillo Radial Glitch en 360°:** Despacha una descarga circular de 8 a 12 orbes de virus púrpura/cian en todas las direcciones tridimensionales para castigar la estancia aérea estática.
 * **Deleción de Bloques y Desintegración de Memoria:** Dispara bombas de corrupción cuántica que borran permanentemente bloques del piso. A 5 HP y 3 HP activa alertas telegrafiadas (`ERROR 404: SECTOR BORRADO`) que desintegran franjas completas abriendo fosas radiactivas al vacío mortal.
 * **Invocación de Agentes Virales:** Despliega esbirros ciber-glitch veloces y agresivos que patrullan y asedian a Mario.
 * **Fase Crítica (HP <= 2):** Sobrecarga de velocidad extrema ($190\text{ px/s}$), ráfagas dobles y teletransportes frenéticos.
-* **Frase Icónica de Derrota:** Al vaciar sus 7 HP, se congela temblando y pronuncia:
+* **Frase Icónica de Derrota y Revelación:** Al vaciar sus 7 HP, se congela temblando y pronuncia:
   > **❝ I always come back ❞**
-  seguido de su implosión, la fanfarria de victoria y la Pantalla de Gran Victoria Definitiva.
+  seguido de su implosión, el inicio del nuevo soundtrack cinematográfico misterioso `music_akatsuki` y la **Pantalla de Epílogo con Teaser de los Akatsuki** (anunciando la llegada de la temida organización ninja de 10 renegados para la siguiente demo).
+* **Escenario de Pelea 100% Despejado (Luna Roja Visible):** A diferencia de un cuadro opaco tradicional que tape la pantalla, el mensaje final y teaser se proyectan en un encuadre panorámico letterbox (*cinematic borders* superior e inferior). Al caer BonziBuddy, **todos los bloques de plataformas flotantes y muros de la arena se desintegran en partículas glitch y se eliminan por completo**, permitiendo admirar la imponente Luna Roja de Ojos Malditos, el cielo carmesí de eclipse y el horizonte apocalíptico sin ningún obstáculo visual.
 
 ---
 

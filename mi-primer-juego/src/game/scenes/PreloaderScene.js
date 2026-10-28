@@ -43,6 +43,7 @@ export class PreloaderScene extends Phaser.Scene {
         this.load.image('fireball', './assets/images/fireball.png');
         this.load.image('bonzi', './assets/sprites/bonzi.png');
         this.load.image('bonzi_red', './assets/sprites/bonzi_red.png');
+        this.load.image('red_moon', './assets/sprites/red_moon.png');
 
         // --- Carga de Soundtracks (con rutas relativas para GitHub Pages) ---
         this.load.audio('music_menu', './assets/sounds/music_menu.mp3');
@@ -52,6 +53,7 @@ export class PreloaderScene extends Phaser.Scene {
         this.load.audio('music_gameover', './assets/sounds/music_gameover.mp3');
         this.load.audio('music_victory', './assets/sounds/music_victory.mp3');
         this.load.audio('music_apocalypse', './assets/sounds/music_apocalypse.mp3');
+        this.load.audio('music_akatsuki', './assets/sounds/music_akatsuki.mp3');
 
         // --- Carga de Efectos de Sonido (SFX) ---
         this.load.audio('sfx_jump', './assets/sounds/sfx_jump.mp3');
@@ -112,6 +114,10 @@ export class PreloaderScene extends Phaser.Scene {
         if (!this.textures.exists('bonzi_red')) {
             const g = this.make.graphics().fillStyle(0x7c3f9c).fillRect(0, 0, 64, 64).fillStyle(0xff0000).fillCircle(20, 20, 6).fillCircle(44, 20, 6);
             g.generateTexture('bonzi_red', 64, 64);
+        }
+        if (!this.textures.exists('red_moon')) {
+            const g = this.make.graphics().fillStyle(0xb91c1c).fillCircle(50, 50, 50).fillStyle(0x000000).fillCircle(50, 50, 10);
+            g.generateTexture('red_moon', 100, 100);
         }
     }
 }

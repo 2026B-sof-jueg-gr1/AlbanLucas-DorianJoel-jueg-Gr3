@@ -123,7 +123,7 @@ export class Level5Scene extends BaseLevelScene {
         this.createPowerup(2420, 370);
         this.createFeather(2500, 320);
 
-        this.add.text(2410, 180, '🚩 CHECKPOINT: ANTE LA ANOMALÍA DIGITAL\nEquípate con el Hongo y la Pluma y cruza la puerta.', {
+        this.checkpointText = this.add.text(2410, 180, '🚩 CHECKPOINT: ANTE LA ANOMALÍA DIGITAL\nEquípate con el Hongo y la Pluma y cruza la puerta.', {
             fontSize: '11px',
             fontFamily: 'monospace',
             color: '#c084fc',
@@ -218,9 +218,66 @@ export class Level5Scene extends BaseLevelScene {
         this.physics.add.collider(this.player, this.bonzi, this.handleBonziCollision, null, this);
     }
 
+    createRedMoonArenaBackground() {
+        // Cielo carmesí oscuro que reemplaza el fondo únicamente en la arena del jefe
+        this.arenaRedSky = this.add.rectangle(3000, 225, 800, 450, 0x1a0208, 0.95).setDepth(-25);
+
+        // Resplandor ardiente de eclipse carmesí detrás de la luna
+        this.redMoonGlow = this.add.circle(3000, 165, 175, 0xff0022, 0.35).setDepth(-22);
+        this.tweens.add({
+            targets: this.redMoonGlow,
+            scaleX: 1.15,
+            scaleY: 1.15,
+            alpha: 0.18,
+            duration: 2200,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // La Luna Roja (Rinne Sharingan apocalíptico de BonziBuddy)
+        this.redMoon = this.add.image(3000, 165, 'red_moon')
+            .setScale(0.44)
+            .setDepth(-20)
+            .setAlpha(0);
+
+        // Entrada dramática de la Luna Roja
+        this.tweens.add({
+            targets: this.redMoon,
+            alpha: 1,
+            duration: 2200,
+            ease: 'Power2'
+        });
+
+        // Rotación sutil y pulsación cósmica continua
+        this.tweens.add({
+            targets: this.redMoon,
+            scaleX: 0.47,
+            scaleY: 0.47,
+            duration: 3500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        this.tweens.add({
+            targets: this.redMoon,
+            angle: 360,
+            duration: 180000,
+            repeat: -1
+        });
+    }
+
     startBossBattle() {
         if (this.bossActive) return;
         this.bossActive = true;
+        this.bossInvulnerable = true;
+
+        // Limpiar texto de checkpoint previo para que no aparezca en la arena
+        if (this.checkpointText) {
+            this.checkpointText.destroy();
+            this.checkpointText = null;
+        }
 
         // 1. Cambiar al Soundtrack intenso del Jefe
         this.playLevelMusic('music_boss', 0.65);
@@ -234,18 +291,29 @@ export class Level5Scene extends BaseLevelScene {
         this.cameras.main.setBounds(2600, 0, 800, 450);
         this.cameras.main.shake(600, 0.025);
 
-        // 4. Crear HUD de la Barra de Vida de BonziBuddy
-        this.createBossHealthBar();
+        // 4. Activar el fondo especial de la Luna Roja (únicamente en la arena del jefe)
+        this.createRedMoonArenaBackground();
 
-        // 5. Iniciar bucle de ataques de BonziBuddy
-        this.bossAttackTimer = this.time.addEvent({
-            delay: 2000,
-            loop: true,
-            callback: () => this.bossAttackRoutine()
+        // 5. Cinemática y Presentación de 5 Segundos antes de enfrentar a BonziBuddy
+        this.playBossPresentationCinematic({
+            title: '⚠️ ¡ALERTA DE ENTIDAD CORRUPTA! ⚠️',
+            name: '🟣 BONZIBUDDY — VIRUS DEL APOCALIPSIS 🟣',
+            quote: '❝ Bajo la Luna de Sangre, tu sistema será purgado sin piedad... ❞',
+            accentColor: 0xa855f7,
+            onComplete: () => {
+                // Pasados los 5 segundos exactos:
+                this.bossInvulnerable = false;
+                this.createBossHealthBar();
+                this.showFloatingText(2950, 100, '🔥 ¡A LUCHAR! 🔥', '#c084fc');
+
+                // Iniciar bucle de ataques de BonziBuddy
+                this.bossAttackTimer = this.time.addEvent({
+                    delay: 2000,
+                    loop: true,
+                    callback: () => this.bossAttackRoutine()
+                });
+            }
         });
-
-        // Efecto glitch de bienvenida
-        this.showFloatingText(2950, 100, '❝ BIENVENIDO AL FIN DEL MUNDO ❞', '#c084fc');
     }
 
     createBossHealthBar() {
@@ -461,6 +529,242 @@ export class Level5Scene extends BaseLevelScene {
         }
     }
 
+    playGlitchSound() {
+        try {
+            const ctx = this.sound && this.sound.context;
+            if (!ctx) return;
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sawtooth';
+            // Frecuencias erráticas y caóticas típicas de fallo de memoria / virus informático
+            osc.frequency.setValueAtTime(950, now);
+            osc.frequency.setValueAtTime(220, now + 0.04);
+            osc.frequency.setValueAtTime(1400, now + 0.08);
+            osc.frequency.setValueAtTime(180, now + 0.12);
+            osc.frequency.setValueAtTime(1750, now + 0.16);
+            osc.frequency.setValueAtTime(90, now + 0.20);
+
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.29);
+        } catch (e) {
+            // Manejo silencioso en caso de restricciones de audio
+        }
+    }
+
+    triggerBonziSpriteGlitch(onComplete) {
+        if (!this.bonzi || !this.bonzi.active) {
+            if (onComplete) onComplete();
+            return;
+        }
+
+        // Sonido sintético de bitcrush / fallo digital de virus
+        this.playGlitchSound();
+
+        // Detener movimiento y congelar para el efecto de impacto
+        this.bonzi.setVelocity(0, 0);
+
+        const baseX = this.bonzi.x;
+        const baseY = this.bonzi.y;
+        const baseScaleX = this.bonzi.scaleX;
+        const baseScaleY = this.bonzi.scaleY;
+        const isFlipped = this.bonzi.flipX;
+
+        const glitchObjects = [];
+
+        // 1. Clones de aberración cromática RGB (Ghost Sprites del propio BonziBuddy)
+        const cyanGhost = this.add.image(baseX - 16, baseY, 'bonzi_red')
+            .setScale(Math.abs(baseScaleX), baseScaleY)
+            .setFlipX(isFlipped)
+            .setTint(0x00ffff)
+            .setAlpha(0.75)
+            .setDepth(this.bonzi.depth - 1);
+
+        const magentaGhost = this.add.image(baseX + 16, baseY, 'bonzi_red')
+            .setScale(Math.abs(baseScaleX), baseScaleY)
+            .setFlipX(isFlipped)
+            .setTint(0xff007f)
+            .setAlpha(0.75)
+            .setDepth(this.bonzi.depth - 1);
+
+        const whiteGhost = this.add.image(baseX, baseY - 6, 'bonzi_red')
+            .setScale(Math.abs(baseScaleX), baseScaleY)
+            .setFlipX(isFlipped)
+            .setTint(0xffffff)
+            .setAlpha(0.55)
+            .setDepth(this.bonzi.depth - 2);
+
+        glitchObjects.push(cyanGhost, magentaGhost, whiteGhost);
+
+        // 2. Tiras y franjas horizontales de corte digital (Scanline Slices sobre el sprite)
+        const sliceColors = [0x00ffff, 0xff00ff, 0x22c55e, 0xffffff, 0xffff00];
+        const slices = [];
+        for (let i = 0; i < 9; i++) {
+            const offsetY = Phaser.Math.Between(-45, 45);
+            const sliceWidth = Phaser.Math.Between(45, 100);
+            const sliceHeight = Phaser.Math.Between(2, 6);
+            const slice = this.add.rectangle(
+                baseX + Phaser.Math.Between(-15, 15),
+                baseY + offsetY,
+                sliceWidth,
+                sliceHeight,
+                Phaser.Utils.Array.GetRandom(sliceColors),
+                0.85
+            ).setDepth(this.bonzi.depth + 1);
+            slices.push(slice);
+            glitchObjects.push(slice);
+        }
+
+        // 3. Glifos de error y código binario que escapan del sprite
+        const virusGlyphs = ['01', 'ERR', '404', 'VIRUS', 'NULL', '#!%', '0x7F', '>_<'];
+        for (let i = 0; i < 5; i++) {
+            const glyphText = Phaser.Utils.Array.GetRandom(virusGlyphs);
+            const glyphColor = Phaser.Utils.Array.GetRandom(['#00ffff', '#ff00ff', '#22c55e', '#ffd700']);
+            const glyph = this.add.text(
+                baseX + Phaser.Math.Between(-30, 30),
+                baseY + Phaser.Math.Between(-30, 20),
+                glyphText,
+                {
+                    fontSize: '11px',
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                    color: glyphColor,
+                    stroke: '#000000',
+                    strokeThickness: 3
+                }
+            ).setDepth(this.bonzi.depth + 2);
+
+            this.tweens.add({
+                targets: glyph,
+                x: glyph.x + Phaser.Math.Between(-35, 35),
+                y: glyph.y - Phaser.Math.Between(25, 55),
+                alpha: 0,
+                duration: Phaser.Math.Between(320, 480),
+                ease: 'Power1',
+                onComplete: () => glyph.destroy()
+            });
+        }
+
+        // 4. Franjas de interferencia en pantalla completa (CRT glitch scanlines)
+        const screenLines = [];
+        for (let i = 0; i < 3; i++) {
+            const line = this.add.rectangle(
+                this.cameras.main.scrollX + 400,
+                Phaser.Math.Between(80, 380),
+                800,
+                Phaser.Math.Between(2, 5),
+                Phaser.Utils.Array.GetRandom([0x00ffff, 0xff00ff, 0xffffff]),
+                0.35
+            ).setDepth(450);
+            screenLines.push(line);
+            glitchObjects.push(line);
+        }
+
+        // 5. Bucle espasmódico de glitch sobre el sprite de Bonzi (380 ms)
+        let step = 0;
+        const totalSteps = 10;
+        const stepInterval = 38;
+
+        const glitchTimer = this.time.addEvent({
+            delay: stepInterval,
+            repeat: totalSteps - 1,
+            callback: () => {
+                if (!this.bonzi || !this.bonzi.active) {
+                    glitchTimer.remove();
+                    glitchObjects.forEach(o => o && o.destroy && o.destroy());
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                step++;
+
+                // Jitter aleatorio de posición y ángulo del sprite
+                this.bonzi.x = baseX + Phaser.Math.Between(-14, 14);
+                this.bonzi.y = baseY + Phaser.Math.Between(-8, 8);
+                this.bonzi.angle = Phaser.Math.Between(-12, 12);
+
+                // Alternancia de escala y deformación horizontal (glitch de estiramiento)
+                const scaleWarp = Phaser.Utils.Array.GetRandom([0.38, -0.35, 0.31, 0.42, 0.35]);
+                this.bonzi.scaleX = scaleWarp * (isFlipped ? -1 : 1);
+                this.bonzi.scaleY = baseScaleY * Phaser.Math.FloatBetween(0.85, 1.15);
+
+                // Tintes corruptos y parpadeo de canal
+                const corruptedTint = Phaser.Utils.Array.GetRandom([
+                    0x00ffff, // Cian eléctrico
+                    0xff00ff, // Magenta glitch
+                    0xffffff, // Flash blanco estático
+                    0x00ff66, // Verde matriz
+                    0xffff00, // Amarillo error
+                    0x7c3aed, // Púrpura virus
+                    0xff0033  // Rojo crítico
+                ]);
+                this.bonzi.setTint(corruptedTint);
+
+                // Mover clones RGB en direcciones opuestas
+                if (cyanGhost && cyanGhost.active) {
+                    cyanGhost.setPosition(this.bonzi.x - Phaser.Math.Between(10, 26), this.bonzi.y + Phaser.Math.Between(-6, 6));
+                    cyanGhost.angle = -this.bonzi.angle;
+                }
+                if (magentaGhost && magentaGhost.active) {
+                    magentaGhost.setPosition(this.bonzi.x + Phaser.Math.Between(10, 26), this.bonzi.y + Phaser.Math.Between(-6, 6));
+                    magentaGhost.angle = this.bonzi.angle * 1.5;
+                }
+                if (whiteGhost && whiteGhost.active) {
+                    whiteGhost.setPosition(this.bonzi.x + Phaser.Math.Between(-6, 6), this.bonzi.y - Phaser.Math.Between(4, 12));
+                }
+
+                // Desplazar tiras horizontales aleatoriamente
+                slices.forEach(s => {
+                    if (s && s.active) {
+                        s.x = baseX + Phaser.Math.Between(-24, 24);
+                        s.width = Phaser.Math.Between(35, 110);
+                        s.alpha = Phaser.Math.FloatBetween(0.4, 0.95);
+                    }
+                });
+
+                // Mover líneas de pantalla
+                screenLines.forEach(l => {
+                    if (l && l.active) {
+                        l.y = Phaser.Math.Between(60, 400);
+                        l.alpha = Phaser.Math.FloatBetween(0.2, 0.5);
+                    }
+                });
+
+                // Al completar los pasos del glitch
+                if (step >= totalSteps) {
+                    // Limpiar artefactos y clones
+                    glitchObjects.forEach(o => o && o.destroy && o.destroy());
+
+                    if (this.bonzi && this.bonzi.active) {
+                        this.bonzi.setPosition(baseX, baseY);
+                        this.bonzi.setScale(Math.abs(baseScaleX) * (isFlipped ? -1 : 1), baseScaleY);
+                        this.bonzi.angle = 0;
+
+                        // Tinte según la fase de vida
+                        if (this.bossHP <= 2) {
+                            this.bonzi.setTint(0xff0033);
+                        } else if (this.bossHP <= 4) {
+                            this.bonzi.setTint(0xff88aa);
+                        } else {
+                            this.bonzi.clearTint();
+                        }
+                    }
+
+                    if (onComplete) onComplete();
+                }
+            }
+        });
+    }
+
     teleportBonzi() {
         if (!this.bonzi || !this.bonzi.active || this.bossDefeated) return;
 
@@ -599,7 +903,7 @@ export class Level5Scene extends BaseLevelScene {
     }
 
     handleBonziCollision(player, boss) {
-        if (this.bossDefeated || this.isDead) return;
+        if (this.bossDefeated || this.isDead || this.inBossCinematic) return;
 
         // Detección definitiva de pisotón (Stomp sobre la cabeza de BonziBuddy):
         // 1. Debe estar descendiendo en el aire o planeando (nunca quieto o corriendo en el suelo)
@@ -630,32 +934,35 @@ export class Level5Scene extends BaseLevelScene {
         this.addScore(600); // 600 puntos por golpe
         this.updateBossHealthBar();
 
-        this.cameras.main.shake(350, 0.025);
-        this.showFloatingText(this.bonzi.x, this.bonzi.y - 60, '-1 HP (¡BONZI DAÑADO! +600)', '#ffd700');
+        this.cameras.main.shake(250, 0.02);
+        this.showFloatingText(this.bonzi.x, this.bonzi.y - 60, '-1 HP (¡BONZI CORRUPTO! +600)', '#ffd700');
 
         // 1. ANILLO RADIAL DE BOMBAS EN 360° (evita que el jugador rebote en el mismo lugar)
         const ringCount = this.bossHP <= 3 ? 12 : 8;
         this.fireRadialGlitchRing(this.bonzi.x, this.bonzi.y, ringCount);
 
-        // 2. TELETRANSPORTACIÓN GLITCH INMEDIATA A OTRO LUGAR DE LA ARENA
-        this.teleportBonzi();
+        // 2. EFECTO DE GLITCH VISUAL EN EL SPRITE DE BONZIBUDDY (VIRUS)
+        this.triggerBonziSpriteGlitch(() => {
+            if (this.bossHP <= 0) {
+                this.defeatBonzi();
+            } else {
+                // 3. TELETRANSPORTACIÓN TRAS EL GLITCH
+                this.teleportBonzi();
 
-        // 3. EVENTOS DE FASE (Corrupción de piso e invocación de agentes virales)
-        if (this.bossHP === 5) {
-            this.time.delayedCall(400, () => {
-                this.corruptAndDestroyFloor(2860, '👾 ¡ERROR 404: SECTOR DE MEMORIA BORRADO! 👾');
-                this.summonCyberMinions(2);
-            });
-        } else if (this.bossHP === 3) {
-            this.time.delayedCall(400, () => {
-                this.corruptAndDestroyFloor(3120, '⚠️ CORRUPCIÓN CRÍTICA: COLAPSO DEL SISTEMA ⚠️');
-                this.summonCyberMinions(2);
-            });
-        }
-
-        if (this.bossHP <= 0) {
-            this.defeatBonzi();
-        }
+                // 4. EVENTOS DE FASE (Corrupción de piso e invocación de agentes virales)
+                if (this.bossHP === 5) {
+                    this.time.delayedCall(300, () => {
+                        this.corruptAndDestroyFloor(2860, '👾 ¡ERROR 404: SECTOR DE MEMORIA BORRADO! 👾');
+                        this.summonCyberMinions(2);
+                    });
+                } else if (this.bossHP === 3) {
+                    this.time.delayedCall(300, () => {
+                        this.corruptAndDestroyFloor(3120, '⚠️ CORRUPCIÓN CRÍTICA: COLAPSO DEL SISTEMA ⚠️');
+                        this.summonCyberMinions(2);
+                    });
+                }
+            }
+        });
     }
 
     defeatBonzi() {
@@ -681,6 +988,32 @@ export class Level5Scene extends BaseLevelScene {
         // Desactivar controles del jugador durante la cinemática
         this.player.setVelocity(0, 0);
         this.player.body.enable = false;
+
+        // Ocultar / destruir elementos de HUD y checkpoint para dejar la escena completamente limpia
+        if (this.bossHudContainer) {
+            this.bossHudContainer.destroy();
+            this.bossHudContainer = null;
+        }
+        if (this.hudText) {
+            this.hudText.setVisible(false);
+        }
+        if (this.pauseBtn) {
+            this.pauseBtn.setVisible(false);
+        }
+        if (this.checkpointText) {
+            this.checkpointText.destroy();
+            this.checkpointText = null;
+        }
+
+        // Bajar suavemente al jugador hacia el suelo seguro para que no quede flotando frente a la Luna
+        if (this.player) {
+            this.tweens.add({
+                targets: this.player,
+                y: 405,
+                duration: 700,
+                ease: 'Power2'
+            });
+        }
 
         // Sacudida dramática
         this.cameras.main.shake(1500, 0.035);
@@ -712,15 +1045,29 @@ export class Level5Scene extends BaseLevelScene {
             dialogBox.destroy();
             quote.destroy();
 
-            // Flash y sonido de victoria
+            // Flash y reproducción del nuevo Soundtrack cinematográfico (Teaser Akatsuki)
             this.cameras.main.flash(1200, 255, 255, 255);
             try {
-                if (this.cache.audio.exists('music_victory')) {
+                this.sound.stopAll();
+                if (this.cache.audio.exists('music_akatsuki')) {
+                    this.sound.play('music_akatsuki', { volume: 0.85, loop: true });
+                } else if (this.cache.audio.exists('music_victory')) {
                     this.sound.play('music_victory', { volume: 0.8, loop: false });
                 }
             } catch (e) { }
 
-            // Animación de desintegración
+            // Desintegrar y eliminar todos los bloques de plataforma en la arena para ver la Luna Roja en todo su esplendor
+            this.disintegrateArenaPlatforms();
+
+            // La Luna Roja permanece imponente y visible en el cielo revelando la sombra de los Akatsuki
+            if (this.redMoon) {
+                this.tweens.add({
+                    targets: this.redMoon,
+                    alpha: 1.0,
+                    duration: 1500
+                });
+            }
+
             this.tweens.add({
                 targets: this.bonzi,
                 angle: 1080,
@@ -731,8 +1078,53 @@ export class Level5Scene extends BaseLevelScene {
                 ease: 'Cubic.easeIn',
                 onComplete: () => {
                     this.bonzi.destroy();
-                    // Mostrar pantalla de victoria definitiva
+                    // Mostrar pantalla de victoria y teaser de la siguiente demo sin tapar la Luna Roja
                     this.showGrandVictoryScreen();
+                }
+            });
+        });
+    }
+
+    disintegrateArenaPlatforms() {
+        // Seleccionar todos los bloques de plataformas en la arena (pared de entrada y plataformas elevadas)
+        const arenaTiles = this.platforms.getChildren().filter(tile => {
+            return tile && tile.active && tile.x >= 2580 && (tile.texture.key === 'platform' || tile.y < 415);
+        });
+
+        arenaTiles.forEach((tile, index) => {
+            if (tile.body) tile.body.enable = false;
+
+            // Partículas de desintegración glitch carmesí y púrpura
+            for (let i = 0; i < 3; i++) {
+                const p = this.add.circle(
+                    tile.x + Phaser.Math.Between(-14, 14),
+                    tile.y + Phaser.Math.Between(-14, 14),
+                    Phaser.Math.Between(3, 6),
+                    Math.random() > 0.5 ? 0xdc2626 : 0x7c3aed
+                ).setDepth(30);
+
+                this.tweens.add({
+                    targets: p,
+                    y: p.y - Phaser.Math.Between(25, 55),
+                    alpha: 0,
+                    scale: 0.1,
+                    duration: Phaser.Math.Between(400, 700),
+                    onComplete: () => p.destroy()
+                });
+            }
+
+            // Desvanecimiento suave y eliminación de cada bloque
+            this.tweens.add({
+                targets: tile,
+                alpha: 0,
+                scaleX: 0.1,
+                scaleY: 0.1,
+                y: tile.y + 20,
+                duration: 650,
+                delay: (index % 8) * 50,
+                ease: 'Power2',
+                onComplete: () => {
+                    this.platforms.remove(tile, true, true);
                 }
             });
         });
@@ -741,59 +1133,115 @@ export class Level5Scene extends BaseLevelScene {
     showGrandVictoryScreen() {
         const { width, height } = this.cameras.main;
 
-        // Panel de victoria definitiva
-        this.add.rectangle(width / 2, height / 2, 720, 360, 0x070514, 0.96)
-            .setStrokeStyle(5, 0xffd700)
+        // 0. Eliminación definitiva de cualquier bloque de plataforma restante en la arena para despejar totalmente la Luna Roja
+        const leftoverTiles = this.platforms.getChildren().filter(tile => {
+            return tile && tile.active && tile.x >= 2580 && (tile.texture.key === 'platform' || tile.y < 415);
+        });
+        leftoverTiles.forEach(tile => {
+            this.platforms.remove(tile, true, true);
+        });
+
+        // Asegurar que el HUD y textos previos no interfieran
+        if (this.hudText) this.hudText.setVisible(false);
+        if (this.pauseBtn) this.pauseBtn.setVisible(false);
+        if (this.bossHudContainer) {
+            this.bossHudContainer.destroy();
+            this.bossHudContainer = null;
+        }
+        if (this.checkpointText) {
+            this.checkpointText.destroy();
+            this.checkpointText = null;
+        }
+
+        // --- ENCUADRE CINEMATOGRÁFICO: LA LUNA ROJA Y EL ESCENARIO PERMANECEN 100% VISIBLES EN EL CENTRO ---
+
+        // 1. Franja Superior Cinemática (Título del Epílogo)
+        this.add.rectangle(width / 2, 38, width, 72, 0x050106, 0.9)
+            .setStrokeStyle(1, 0xb91c1c)
             .setScrollFactor(0)
             .setDepth(400);
 
-        this.add.text(width / 2, height / 2 - 120, '🏆 ¡HAS SALVADO EL MULTIVERSO! 🏆', {
-            fontSize: '30px',
+        this.add.text(width / 2, 24, '👁️ ¡BONZIBUDDY HA SIDO EXPULSADO! 👁️', {
+            fontSize: '22px',
             fontFamily: 'Impact, Arial Black',
             color: '#ffd700',
-            stroke: '#991b1b',
-            strokeThickness: 6
+            stroke: '#b91c1c',
+            strokeThickness: 5
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
 
-        this.add.text(width / 2, height / 2 - 70, 'Gorefield fue erradicado y BonziBuddy ha sido expulsado.', {
-            fontSize: '14px',
+        this.add.text(width / 2, 52, 'El virus ha caído... pero la Luna Roja en el firmamento continúa ardiendo sin piedad.', {
+            fontSize: '12px',
             fontFamily: 'monospace',
-            color: '#e2e8f0'
+            color: '#fca5a5'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
 
-        this.add.text(width / 2, height / 2 - 45, '❝ I always come back ❞ ...Pero por hoy, el mundo está a salvo.', {
-            fontSize: '13px',
+        // --- (La franja central Y: 74 a 310 queda completamente libre y transparente para admirar la Luna Roja en todo su esplendor) ---
+
+        // 2. Franja Inferior Cinemática (Teaser Akatsuki, Estadísticas y Opciones)
+        this.add.rectangle(width / 2, height - 70, width, 140, 0x050106, 0.88)
+            .setStrokeStyle(1, 0xdc2626)
+            .setScrollFactor(0)
+            .setDepth(400);
+
+        this.add.text(width / 2, height - 124, '❝ BonziBuddy no era más que un peón... El mundo conocerá el verdadero dolor. ❞', {
+            fontSize: '12px',
             fontFamily: 'monospace',
             fontStyle: 'italic',
-            color: '#f43f5e'
+            color: '#ef4444'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
+
+        // Recuadro Teaser de los Akatsuki
+        const teaserTitle = this.add.text(width / 2, height - 100, '☁️ SIGUIENTE DEMO: ☁️', {
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            color: '#ffd700'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
+
+        const teaserDesc = this.add.text(width / 2, height - 80, 'Sombras con túnicas negras y nubes rojas descienden.', {
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            color: '#ffffff'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
+
+        this.tweens.add({
+            targets: [teaserTitle, teaserDesc],
+            scaleX: 1.02,
+            scaleY: 1.02,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
 
         // Estadísticas de la partida
         const formattedScore = this.score.toString().padStart(6, '0');
-        this.add.text(width / 2, height / 2 + 5, `🎖️ PUNTAJE FINAL: ${formattedScore} PUNTOS | VIDAS: ${'❤️'.repeat(this.lives)} (${this.lives})`, {
-            fontSize: '15px',
+        this.add.text(width / 2, height - 52, `🎖️ PUNTAJE: ${formattedScore} PTS | VIDAS RESTANTES: ${'❤️'.repeat(this.lives)} (${this.lives}) | JEFES VENCIDOS: 2/2`, {
+            fontSize: '12px',
             fontFamily: 'monospace',
             fontWeight: 'bold',
             color: '#22c55e',
             backgroundColor: '#0c2314',
-            padding: { x: 14, y: 7 }
+            padding: { x: 10, y: 4 }
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
 
         // Opciones de reinicio o volver al menú
-        const playAgainBtn = this.add.text(width / 2 - 160, height / 2 + 75, '🔄 [ R ] JUGAR DE NUEVO', {
-            fontSize: '14px',
+        const playAgainBtn = this.add.text(width / 2 - 160, height - 20, '🔄 [ R ] JUGAR DE NUEVO', {
+            fontSize: '12px',
             fontFamily: 'monospace',
+            fontWeight: 'bold',
             color: '#ffffff',
             backgroundColor: '#1b5e20',
-            padding: { x: 12, y: 8 }
+            padding: { x: 12, y: 6 }
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401).setInteractive({ useHandCursor: true });
 
-        const menuBtn = this.add.text(width / 2 + 160, height / 2 + 75, '🏠 [ ENTER ] MENÚ PRINCIPAL', {
-            fontSize: '14px',
+        const menuBtn = this.add.text(width / 2 + 160, height - 20, '🏠 [ ENTER ] MENÚ PRINCIPAL', {
+            fontSize: '12px',
             fontFamily: 'monospace',
+            fontWeight: 'bold',
             color: '#ffffff',
             backgroundColor: '#1e3a8a',
-            padding: { x: 12, y: 8 }
+            padding: { x: 12, y: 6 }
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401).setInteractive({ useHandCursor: true });
 
         const restartGame = () => {
