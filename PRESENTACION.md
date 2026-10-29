@@ -274,7 +274,7 @@ Los enemigos escanean el suelo a 6 píxeles por delante de sus pies antes de ava
 * **Frase Icónica de Derrota y Revelación:** Al vaciar sus 7 HP, se congela temblando y pronuncia:
   > **❝ I always come back ❞**
   seguido de su implosión, el inicio del nuevo soundtrack cinematográfico misterioso `music_akatsuki` y la **Pantalla de Epílogo con Teaser de los Akatsuki** (anunciando la llegada de la temida organización ninja de 10 renegados para la siguiente demo).
-* **Escenario de Pelea 100% Despejado (Luna Roja Visible):** A diferencia de un cuadro opaco tradicional que tape la pantalla, el mensaje final y teaser se proyectan en un encuadre panorámico letterbox (*cinematic borders* superior e inferior). Al caer BonziBuddy, **todos los bloques de plataformas flotantes y muros de la arena se desintegran en partículas glitch y se eliminan por completo**, permitiendo admirar la imponente Luna Roja de Ojos Malditos, el cielo carmesí de eclipse y el horizonte apocalíptico sin ningún obstáculo visual.
+* **Escenario de Pelea Despejado y Revelación de los Akatsuki frente a la Luna Roja:** A diferencia de un cuadro opaco tradicional que tape la pantalla, el mensaje final y teaser se proyectan en un encuadre panorámico letterbox (*cinematic borders* superior e inferior). Al caer BonziBuddy, **todos los bloques de plataformas flotantes y muros de la arena se desintegran en partículas glitch y se eliminan por completo**, y en el centro de la escena, **levitando imponente en frente de la Luna Roja de Ojos Malditos, emerge la silueta del grupo de los diez Akatsuki con la emblemática nube roja (`akts.png`)** y un aura de chakra sombrío, anticipando la invasión de la organización renegada para la siguiente demo.
 
 ---
 

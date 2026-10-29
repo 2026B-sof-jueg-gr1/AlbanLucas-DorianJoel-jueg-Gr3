@@ -1175,7 +1175,50 @@ export class Level5Scene extends BaseLevelScene {
             color: '#fca5a5'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
 
-        // --- (La franja central Y: 74 a 310 queda completamente libre y transparente para admirar la Luna Roja en todo su esplendor) ---
+        // --- SILUETAS DEL GRUPO AKATSUKI EN FRENTE DE LA LUNA ROJA (assets/images/akts.png) ---
+        const aktsX = width / 2; // 400px (centrado exactamente con la Luna Roja)
+        const aktsY = 192;       // Centrado verticalmente en la ventana cinematográfica (Y: 74 a 310)
+
+        // Resplandor sombrío de chakra Akatsuki detrás del grupo y delante de la Luna
+        const aktsAura = this.add.circle(aktsX, aktsY, 110, 0x581c87, 0.28)
+            .setScrollFactor(0)
+            .setDepth(150);
+
+        this.tweens.add({
+            targets: aktsAura,
+            scaleX: 1.25,
+            scaleY: 1.25,
+            alpha: 0.48,
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Imagen de los Akatsuki colocada imponente en frente de la Luna Roja
+        this.akatsukiGroup = this.add.image(aktsX, aktsY, 'akatsuki_group')
+            .setScale(0.52) // Escala equilibrada de 604x413px a ~314x215px
+            .setScrollFactor(0)
+            .setDepth(200)
+            .setAlpha(0);
+
+        // Entrada dramática y respiración / levitación sutil
+        this.tweens.add({
+            targets: this.akatsukiGroup,
+            alpha: 1,
+            duration: 1200,
+            ease: 'Power2',
+            onComplete: () => {
+                this.tweens.add({
+                    targets: this.akatsukiGroup,
+                    y: aktsY - 6,
+                    duration: 2200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+        });
 
         // 2. Franja Inferior Cinemática (Teaser Akatsuki, Estadísticas y Opciones)
         this.add.rectangle(width / 2, height - 70, width, 140, 0x050106, 0.88)
@@ -1191,7 +1234,7 @@ export class Level5Scene extends BaseLevelScene {
         }).setOrigin(0.5).setScrollFactor(0).setDepth(401);
 
         // Recuadro Teaser de los Akatsuki
-        const teaserTitle = this.add.text(width / 2, height - 100, '☁️ SIGUIENTE DEMO: ☁️', {
+        const teaserTitle = this.add.text(width / 2, height - 100, 'PRÓXIMAMENTE:', {
             fontSize: '12px',
             fontFamily: 'monospace',
             fontWeight: 'bold',

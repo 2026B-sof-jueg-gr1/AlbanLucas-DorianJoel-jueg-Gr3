@@ -44,6 +44,7 @@ export class PreloaderScene extends Phaser.Scene {
         this.load.image('bonzi', './assets/sprites/bonzi.png');
         this.load.image('bonzi_red', './assets/sprites/bonzi_red.png');
         this.load.image('red_moon', './assets/sprites/red_moon.png');
+        this.load.image('akatsuki_group', './assets/images/akts.png');
 
         // --- Carga de Soundtracks (con rutas relativas para GitHub Pages) ---
         this.load.audio('music_menu', './assets/sounds/music_menu.mp3');
@@ -118,6 +119,10 @@ export class PreloaderScene extends Phaser.Scene {
         if (!this.textures.exists('red_moon')) {
             const g = this.make.graphics().fillStyle(0xb91c1c).fillCircle(50, 50, 50).fillStyle(0x000000).fillCircle(50, 50, 10);
             g.generateTexture('red_moon', 100, 100);
+        }
+        if (!this.textures.exists('akatsuki_group')) {
+            const g = this.make.graphics().fillStyle(0x111111).fillRect(0, 0, 80, 50).fillStyle(0xb91c1c).fillCircle(40, 25, 15);
+            g.generateTexture('akatsuki_group', 80, 50);
         }
     }
 }
